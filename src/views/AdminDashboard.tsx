@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useApp } from "../context/AppDataContext";
 import { 
   ShieldCheck, 
@@ -12,10 +12,170 @@ import {
   RefreshCw, 
   Download, 
   Globe, 
-  Sliders 
+  Sliders,
+  Database,
+  Server,
+  Cloud,
+  CheckCircle,
+  AlertTriangle,
+  Copy,
+  Check,
+  Zap,
+  ArrowUpRight
 } from "lucide-react";
 import { LamborghiniArcGauge } from "../components/cockpit/LamborghiniGauge";
 import type { RoleType, AuditLogEntry } from "../types";
+
+const SCHEMA_SQL_SNIPPET = `-- ==============================================================================
+-- LearnWise Classroom — Supabase PostgreSQL Database Schema
+-- สคริปต์สร้างตารางฐานข้อมูลคลาวด์สำหรับระบบ LearnWise Classroom
+-- สามารถคัดลอกคำสั่งทั้งหมดนี้ไปวางใน Supabase Dashboard -> SQL Editor แล้วกด RUN
+-- ==============================================================================
+
+-- 1. สร้างตารางผู้ใช้งานและโปรไฟล์ (Profiles & Learner Personas)
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  avatar_url TEXT,
+  role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('admin', 'teacher', 'student')),
+  department TEXT,
+  school_id TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended')),
+  learner_profile JSONB,
+  last_login_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. สร้างตารางภารกิจการเรียนรู้ (Missions / Assignments)
+CREATE TABLE IF NOT EXISTS public.missions (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL CHECK (type IN ('quiz', 'short-answer', 'coding')),
+  title TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  objective_ids TEXT[] DEFAULT '{}',
+  description TEXT,
+  instructions TEXT,
+  estimated_minutes INT DEFAULT 15,
+  due_date DATE,
+  status TEXT DEFAULT 'published',
+  target_student_ids TEXT[] DEFAULT '{}',
+  config JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. สร้างตารางการมีส่วนร่วมในภารกิจ (Participations)
+CREATE TABLE IF NOT EXISTS public.participations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  mission_id TEXT NOT NULL REFERENCES public.missions(id) ON DELETE CASCADE,
+  started_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(student_id, mission_id)
+);
+
+-- 4. สร้างตารางแบบร่างงาน (Drafts)
+CREATE TABLE IF NOT EXISTS public.drafts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  mission_id TEXT NOT NULL REFERENCES public.missions(id) ON DELETE CASCADE,
+  based_on_attempt_id TEXT,
+  content TEXT DEFAULT '',
+  language TEXT,
+  revision_note TEXT DEFAULT '',
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(student_id, mission_id)
+);
+
+-- 5. สร้างตารางประวัติการส่งงานของนักเรียน (Attempts)
+CREATE TABLE IF NOT EXISTS public.attempts (
+  id TEXT PRIMARY KEY,
+  student_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  mission_id TEXT NOT NULL REFERENCES public.missions(id) ON DELETE CASCADE,
+  attempt_no INT NOT NULL DEFAULT 1,
+  type TEXT NOT NULL,
+  content TEXT NOT NULL,
+  language TEXT,
+  revision_note TEXT DEFAULT '',
+  submitted_at TIMESTAMPTZ DEFAULT NOW(),
+  submission_token TEXT,
+  pulse_rating TEXT
+);
+
+-- 6. สร้างตารางผลการประเมินรูบริกและข้อเสนอแนะของครู (Reviews)
+CREATE TABLE IF NOT EXISTS public.reviews (
+  id TEXT PRIMARY KEY,
+  attempt_id TEXT NOT NULL REFERENCES public.attempts(id) ON DELETE CASCADE,
+  teacher_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  publication_status TEXT NOT NULL DEFAULT 'published',
+  decision TEXT NOT NULL CHECK (decision IN ('finalize', 'request_changes')),
+  feedback TEXT,
+  criterion_scores JSONB,
+  raw_score NUMERIC,
+  max_raw_score NUMERIC DEFAULT 6,
+  percent_score NUMERIC,
+  outcome TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  published_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. สร้างตารางประวัติการทำแบบทดสอบ (Quiz History)
+CREATE TABLE IF NOT EXISTS public.quiz_history (
+  id TEXT PRIMARY KEY,
+  mission_id TEXT NOT NULL REFERENCES public.missions(id) ON DELETE CASCADE,
+  student_id TEXT NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  attempt_no INT NOT NULL DEFAULT 1,
+  answers JSONB NOT NULL DEFAULT '{}'::jsonb,
+  score NUMERIC NOT NULL DEFAULT 0,
+  max_score NUMERIC NOT NULL DEFAULT 0,
+  percent_score NUMERIC NOT NULL DEFAULT 0,
+  passed BOOLEAN NOT NULL DEFAULT false,
+  submitted_at TIMESTAMPTZ DEFAULT NOW(),
+  pulse_rating TEXT
+);
+
+-- 8. สร้างตารางบันทึกความปลอดภัยและกิจกรรมระบบ (Audit Logs)
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+  id TEXT PRIMARY KEY,
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  user_email TEXT NOT NULL,
+  user_name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  category TEXT NOT NULL,
+  action TEXT NOT NULL,
+  details TEXT,
+  ip_address TEXT
+);
+
+-- 9. สร้างตารางค่าคอนฟิกและนโยบายระบบ (System Settings)
+CREATE TABLE IF NOT EXISTS public.system_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- เปิดใช้งาน Row Level Security (RLS)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.missions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.participations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.drafts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.quiz_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
+
+-- นโยบาย RLS อนุญาตการเข้าถึงผ่าน Anon Public Key
+CREATE POLICY "Allow public read-write profiles" ON public.profiles FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read-write missions" ON public.missions FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read-write participations" ON public.participations FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read-write drafts" ON public.drafts FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read-write attempts" ON public.attempts FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read-write reviews" ON public.reviews FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read-write quiz_history" ON public.quiz_history FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read-write audit_logs" ON public.audit_logs FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public read-write system_settings" ON public.system_settings FOR ALL TO anon USING (true) WITH CHECK (true);
+`;
 
 export const AdminDashboard: React.FC = () => {
   const { 
@@ -26,10 +186,36 @@ export const AdminDashboard: React.FC = () => {
     googleConfig, 
     updateGoogleConfig, 
     auditLogs, 
-    loadSeededClassroom
+    loadSeededClassroom,
+    envelope,
+    supabaseStatus,
+    isSupabaseConnected,
+    supabaseConfig,
+    updateSupabaseCredentials,
+    testCloudConnection,
+    seedToCloud,
+    fetchCloudData
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<"users" | "google" | "audit" | "classes">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "google" | "audit" | "classes" | "supabase">("users");
+
+  // Supabase Configuration Form States
+  const [supabaseUrlInput, setSupabaseUrlInput] = useState(supabaseConfig.url || "");
+  const [supabaseKeyInput, setSupabaseKeyInput] = useState(supabaseConfig.anonKey || "");
+  const [isTestingSupabase, setIsTestingSupabase] = useState(false);
+  const [isSeedingSupabase, setIsSeedingSupabase] = useState(false);
+  const [isFetchingSupabase, setIsFetchingSupabase] = useState(false);
+  const [supabaseFeedback, setSupabaseFeedback] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
+  const [isSqlCopied, setIsSqlCopied] = useState(false);
+
+  useEffect(() => {
+    if (supabaseConfig.url && !supabaseUrlInput) {
+      setSupabaseUrlInput(supabaseConfig.url);
+    }
+    if (supabaseConfig.anonKey && !supabaseKeyInput) {
+      setSupabaseKeyInput(supabaseConfig.anonKey);
+    }
+  }, [supabaseConfig]);
 
   // User Management Filters & Modals
   const [searchQuery, setSearchQuery] = useState("");
@@ -212,18 +398,20 @@ export const AdminDashboard: React.FC = () => {
             <span className="text-[10px] text-cyan-400 mt-1 font-mono">● 100% SSO Synced</span>
           </div>
 
-          {/* Gauge 3: Database Quota */}
+          {/* Gauge 3: Supabase Database Cloud Status */}
           <div className="flex flex-col items-center bg-slate-900/60 p-3 rounded-2xl border border-slate-800/60">
             <LamborghiniArcGauge
-              value={42}
+              value={isSupabaseConnected ? 100 : 0}
               max={100}
               size="md"
-              label="STORAGE QUOTA"
-              unit="%"
-              color="giallo"
-              gear="D"
+              label="SUPABASE CLOUD"
+              unit={isSupabaseConnected ? "ONLINE" : "OFFLINE"}
+              color={isSupabaseConnected ? "verde" : "rosso"}
+              gear={isSupabaseConnected ? "D" : "P"}
             />
-            <span className="text-[10px] text-amber-400 mt-1 font-mono">● 2.1 GB / 5.0 GB</span>
+            <span className={`text-[10px] mt-1 font-mono ${isSupabaseConnected ? "text-emerald-400" : "text-amber-400"}`}>
+              {isSupabaseConnected ? "● PostgreSQL Connected" : "○ Local Fallback Mode"}
+            </span>
           </div>
 
           {/* Gauge 4: Security Score */}
@@ -266,6 +454,27 @@ export const AdminDashboard: React.FC = () => {
         >
           <Globe size={16} />
           <span>ตั้งค่า Google Workspace</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("supabase")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "supabase"
+              ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <Database size={16} />
+          <span>⚡ ฐานข้อมูล Supabase</span>
+          {isSupabaseConnected ? (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+              Live
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-slate-200 text-slate-600">
+              Offline
+            </span>
+          )}
         </button>
 
         <button
@@ -670,6 +879,328 @@ export const AdminDashboard: React.FC = () => {
             <div className="text-xs font-bold text-blue-900 mb-1">มาตรฐานตัวชี้วัดกระทรวงศึกษาธิการที่เชื่อมโยง:</div>
             <div className="text-xs text-blue-800">
               กลุ่มสาระการเรียนรู้วิทยาศาสตร์และเทคโนโลยี • <strong>มาตรฐาน ว 4.2 สาระเทคโนโลยี (วิทยาการคำนวณ) ตัวชี้วัด ม.4/1:</strong> การออกแบบและเขียนโปรแกรมควบคุมแบบวนซ้ำ (Loops) พร้อมระบบประเมิน 6 มิติ (Unified 6-Point Rubric)
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: Supabase Cloud Database */}
+      {activeTab === "supabase" && (
+        <div className="space-y-6">
+          {/* Supabase Hero & Status Card */}
+          <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950 p-6 rounded-3xl border border-emerald-500/20 text-white shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <Database size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold flex items-center gap-2">
+                    <span>ฐานข้อมูลคลาวด์ Supabase (PostgreSQL)</span>
+                    <span className="text-[10px] uppercase font-mono tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      Cloud DB
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    ระบบฐานข้อมูลสัมพันธ์ระดับองค์กร รองรับการจัดเก็บข้อมูลนักเรียน ภารกิจ การส่งงาน ผลการประเมินรูบริก และ Audit Logs
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-800/80 border border-slate-700/80 self-start sm:self-auto">
+                {supabaseStatus === "connected" && (
+                  <>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span className="text-xs font-bold text-emerald-400 font-mono">SUPABASE CONNECTED</span>
+                  </>
+                )}
+                {supabaseStatus === "disconnected" && (
+                  <>
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
+                    <span className="text-xs font-semibold text-slate-400 font-mono">DISCONNECTED / LOCAL CACHE</span>
+                  </>
+                )}
+                {supabaseStatus === "checking" && (
+                  <>
+                    <RefreshCw size={14} className="text-cyan-400 animate-spin" />
+                    <span className="text-xs font-semibold text-cyan-400 font-mono">CHECKING CONNECTION...</span>
+                  </>
+                )}
+                {supabaseStatus === "error" && (
+                  <>
+                    <AlertTriangle size={14} className="text-rose-400" />
+                    <span className="text-xs font-semibold text-rose-400 font-mono">CONNECTION ERROR</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Architecture Explainer Pill */}
+            <div className="mt-4 pt-4 border-t border-slate-800/80 flex flex-wrap items-center gap-4 text-xs text-slate-300">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle size={14} className="text-emerald-400" />
+                <span>สถาปัตยกรรม Hybrid Resilient: ทำงานได้ทั้ง Cloud และ Offline Local Cache</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck size={14} className="text-purple-400" />
+                <span>Row Level Security (RLS) ปกป้องข้อมูลรายคน</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Cloud size={14} className="text-cyan-400" />
+                <span>รองรับ GitHub Pages และโฮสติ้งทุกแห่ง</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Feedback banner */}
+          {supabaseFeedback && (
+            <div className={`p-4 rounded-2xl flex items-center justify-between gap-3 text-xs font-medium ${
+              supabaseFeedback.type === "success" 
+                ? "bg-emerald-50 text-emerald-800 border border-emerald-200" 
+                : supabaseFeedback.type === "error"
+                ? "bg-rose-50 text-rose-800 border border-rose-200"
+                : "bg-blue-50 text-blue-800 border border-blue-200"
+            }`}>
+              <div className="flex items-center gap-2">
+                {supabaseFeedback.type === "success" && <CheckCircle size={16} className="text-emerald-600" />}
+                {supabaseFeedback.type === "error" && <AlertTriangle size={16} className="text-rose-600" />}
+                {supabaseFeedback.type === "info" && <RefreshCw size={16} className="text-blue-600 animate-spin" />}
+                <span>{supabaseFeedback.message}</span>
+              </div>
+              <button 
+                onClick={() => setSupabaseFeedback(null)} 
+                className="text-slate-400 hover:text-slate-600 font-bold px-2 py-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Connection Settings & 1-Click Sync Controls */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Box A: Connection Credentials Form */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Lock size={16} className="text-slate-500" />
+                  <span>กุญแจเชื่อมต่อ Supabase API (API Credentials)</span>
+                </h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  ระบุ URL และ anon key จาก Supabase Dashboard &gt; Project Settings &gt; API
+                </p>
+              </div>
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setIsTestingSupabase(true);
+                setSupabaseFeedback({ type: "info", message: "กำลังทดสอบและเชื่อมต่อฐานข้อมูล Supabase..." });
+                const res = await updateSupabaseCredentials(supabaseUrlInput, supabaseKeyInput);
+                setIsTestingSupabase(false);
+                setSupabaseFeedback({
+                  type: res.success ? "success" : "error",
+                  message: res.message
+                });
+              }} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Supabase Project URL
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://xyzcompany.supabase.co"
+                    value={supabaseUrlInput}
+                    onChange={(e) => setSupabaseUrlInput(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-1 block">ตัวอย่าง: https://abcdefghijklm.supabase.co</span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Supabase Anon Public API Key (anon/public)
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    value={supabaseKeyInput}
+                    onChange={(e) => setSupabaseKeyInput(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
+                  />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">เป็น public key ที่ปลอดภัยสำหรับใช้งานฝั่ง Client</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 pt-2">
+                  <button
+                    type="submit"
+                    disabled={isTestingSupabase}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                  >
+                    {isTestingSupabase ? <RefreshCw size={14} className="animate-spin" /> : <Zap size={14} />}
+                    <span>{isTestingSupabase ? "กำลังเชื่อมต่อ..." : "ทดสอบและบันทึกการเชื่อมต่อ (Connect)"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsTestingSupabase(true);
+                      setSupabaseFeedback({ type: "info", message: "กำลังทดสอบเชื่อมต่อชั่วคราว..." });
+                      const res = await testCloudConnection(supabaseUrlInput, supabaseKeyInput);
+                      setIsTestingSupabase(false);
+                      setSupabaseFeedback({
+                        type: res.success ? "success" : "error",
+                        message: res.message
+                      });
+                    }}
+                    className="px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer transition-all"
+                  >
+                    ทดสอบเฉยๆ
+                  </button>
+
+                  {isSupabaseConnected && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm("ต้องการยกเลิกการเชื่อมต่อ Supabase หรือไม่? (ระบบจะสลับกลับเป็น Local Cache อัตโนมัติ)")) {
+                          updateSupabaseCredentials("", "");
+                          setSupabaseUrlInput("");
+                          setSupabaseKeyInput("");
+                          setSupabaseFeedback({ type: "info", message: "ตัดการเชื่อมต่อ Supabase เรียบร้อยแล้ว ระบบกำลังทำงานด้วย Local Cache" });
+                        }
+                      }}
+                      className="px-3 py-2.5 rounded-xl text-rose-600 hover:bg-rose-50 text-xs font-semibold cursor-pointer transition-all ml-auto"
+                    >
+                      ตัดการเชื่อมต่อ
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+
+            {/* Box B: Data Seeding & Synchronization Control */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between space-y-4">
+              <div>
+                <div className="border-b border-slate-100 pb-3">
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Cloud size={16} className="text-cyan-600" />
+                    <span>การซิงก์ข้อมูลและชุดทดสอบ (Cloud Data Sync)</span>
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    อัปโหลดข้อมูลโรงเรียน นักเรียน และภารกิจทั้งหมดขึ้นตาราง Supabase หรือดึงข้อมูลกลับลงมา
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 my-4">
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                    <div className="text-xs text-slate-400 font-medium">โปรไฟล์ &amp; บัญชี</div>
+                    <div className="text-lg font-bold text-slate-800 mt-0.5 font-mono">{users.length}</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                    <div className="text-xs text-slate-400 font-medium">ภารกิจการเรียนรู้</div>
+                    <div className="text-lg font-bold text-slate-800 mt-0.5 font-mono">{envelope.missions.length}</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-center">
+                    <div className="text-xs text-slate-400 font-medium">ผลการส่ง &amp; ประเมิน</div>
+                    <div className="text-lg font-bold text-slate-800 mt-0.5 font-mono">{envelope.attempts.length + envelope.quizHistory.length}</div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  หากคุณเพิ่งสร้างตารางใหม่ใน Supabase สามารถกดปุ่ม <strong>"ซิงก์ข้อมูลทั้งหมดขึ้น Cloud (Seed to Cloud)"</strong> เพื่ออัปโหลดข้อมูลโรงเรียน ครู นักเรียน และภารกิจทั้ง 4 ชุดขึ้นตารางฐานข้อมูลในคลิกเดียว
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  disabled={!isSupabaseConnected || isSeedingSupabase}
+                  onClick={async () => {
+                    setIsSeedingSupabase(true);
+                    setSupabaseFeedback({ type: "info", message: "กำลังอัปโหลดชุดข้อมูลทั้งหมดขึ้น Supabase Cloud..." });
+                    const res = await seedToCloud();
+                    setIsSeedingSupabase(false);
+                    setSupabaseFeedback({
+                      type: res.success ? "success" : "error",
+                      message: res.message
+                    });
+                  }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-md shadow-purple-500/20 cursor-pointer disabled:opacity-40 transition-all active:scale-95"
+                >
+                  {isSeedingSupabase ? <RefreshCw size={14} className="animate-spin" /> : <Cloud size={14} />}
+                  <span>{isSeedingSupabase ? "กำลังซิงก์..." : "🚀 ซิงก์ข้อมูลทั้งหมดขึ้น Cloud (Seed to Cloud)"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!isSupabaseConnected || isFetchingSupabase}
+                  onClick={async () => {
+                    setIsFetchingSupabase(true);
+                    setSupabaseFeedback({ type: "info", message: "กำลังดึงข้อมูลล่าสุดจาก Supabase..." });
+                    const res = await fetchCloudData();
+                    setIsFetchingSupabase(false);
+                    setSupabaseFeedback({
+                      type: res.success ? "success" : "error",
+                      message: res.message
+                    });
+                  }}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer disabled:opacity-40 transition-all"
+                >
+                  {isFetchingSupabase ? <RefreshCw size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                  <span>ดึงข้อมูลล่าสุดจาก Cloud</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Box C: SQL Schema Migration Guide */}
+          <div className="bg-slate-950 text-slate-100 rounded-3xl p-6 border border-slate-800 shadow-2xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div>
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <FileText size={16} className="text-emerald-400" />
+                  <span>คู่มือการติดตั้งโครงสร้างฐานข้อมูล (SQL Schema Migration Script)</span>
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  คัดลอกโค้ด SQL ด้านล่างนี้ไปวางใน <strong>Supabase Dashboard &gt; SQL Editor &gt; New query</strong> แล้วกด <strong>RUN</strong>
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(SCHEMA_SQL_SNIPPET);
+                  setIsSqlCopied(true);
+                  setTimeout(() => setIsSqlCopied(false), 3000);
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 text-xs font-bold cursor-pointer transition-all self-start sm:self-auto active:scale-95 shadow-lg shadow-emerald-500/20"
+              >
+                {isSqlCopied ? <Check size={14} /> : <Copy size={14} />}
+                <span>{isSqlCopied ? "คัดลอกสำเร็จแล้ว!" : "คัดลอก SQL Schema ทั้งหมด (Copy SQL)"}</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <span className="text-emerald-400 font-bold block mb-1">ขั้นตอนที่ 1</span>
+                <span className="text-slate-300">เปิด Supabase Dashboard โครงการของคุณ แล้วไปที่เมนู <strong>SQL Editor</strong></span>
+              </div>
+              <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <span className="text-emerald-400 font-bold block mb-1">ขั้นตอนที่ 2</span>
+                <span className="text-slate-300">กดปุ่ม <strong>New query</strong> แล้วกด <strong>วาง (Paste)</strong> โค้ด SQL ด้านล่าง</span>
+              </div>
+              <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
+                <span className="text-emerald-400 font-bold block mb-1">ขั้นตอนที่ 3</span>
+                <span className="text-slate-300">กด <strong>Run</strong> เพื่อสร้าง 9 ตารางพร้อมเปิดสิทธิ์ RLS แล้วนำ API Key มาใส่ในหน้านี้</span>
+              </div>
+            </div>
+
+            {/* SQL Code Block with syntax styling */}
+            <div className="relative">
+              <div className="max-h-72 overflow-y-auto bg-slate-900 rounded-2xl p-4 font-mono text-[11px] leading-relaxed text-emerald-300/90 border border-slate-800 select-all">
+                <pre>{SCHEMA_SQL_SNIPPET}</pre>
+              </div>
             </div>
           </div>
         </div>

@@ -23,6 +23,20 @@ import {
   initialGoogleConfig,
   initialAuditLogs
 } from "../data/mock";
+import { 
+  getStoredSupabaseConfig, 
+  saveSupabaseConfig, 
+  testSupabaseConnection 
+} from "../lib/supabase";
+import {
+  seedAllToSupabase,
+  fetchFromSupabase,
+  pushAttemptToCloud,
+  pushReviewToCloud,
+  pushQuizHistoryToCloud,
+  pushAuditLogToCloud,
+  type CloudSyncResult
+} from "../services/supabaseService";
 
 interface AppContextType {
   role: UserRole;
@@ -52,6 +66,15 @@ interface AppContextType {
   recordPulseRating: (type: "attempt" | "quiz", id: string, pulseRating: string) => void;
   resetData: () => void;
   loadSeededClassroom: () => void;
+
+  // Supabase Cloud State & Sync
+  supabaseStatus: "connected" | "disconnected" | "checking" | "error";
+  isSupabaseConnected: boolean;
+  supabaseConfig: { url: string; anonKey: string };
+  updateSupabaseCredentials: (url: string, anonKey: string) => Promise<{ success: boolean; message: string }>;
+  testCloudConnection: (url?: string, anonKey?: string) => Promise<{ success: boolean; message: string }>;
+  seedToCloud: () => Promise<CloudSyncResult>;
+  fetchCloudData: () => Promise<{ success: boolean; message: string }>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -71,6 +94,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [googleConfig, setGoogleConfig] = useState<GoogleWorkspaceConfig>(initialGoogleConfig);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(initialAuditLogs);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+
+  // Supabase Connection State
+  const [supabaseStatus, setSupabaseStatus] = useState<"connected" | "disconnected" | "checking" | "error">("checking");
+  const [supabaseConfigState, setSupabaseConfigState] = useState<{ url: string; anonKey: string }>({ url: "", anonKey: "" });
+
+  useEffect(() => {
+    const conf = getStoredSupabaseConfig();
+    setSupabaseConfigState({ url: conf.url, anonKey: conf.anonKey });
+    if (conf.isConfigured) {
+      testSupabaseConnection(conf.url, conf.anonKey)
+        .then(res => {
+          setSupabaseStatus(res.success ? "connected" : "error");
+        })
+        .catch(() => {
+          setSupabaseStatus("error");
+        });
+    } else {
+      setSupabaseStatus("disconnected");
+    }
+  }, []);
 
   useEffect(() => {
     // Load Users
@@ -208,6 +251,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(updated));
       return updated;
     });
+    // Cloud push in background (silent fallback if offline)
+    pushAuditLogToCloud(entry).catch(() => {});
   };
 
   const openGoogleModal = () => setIsGoogleModalOpen(true);
@@ -392,6 +437,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     );
     
     updateEnvelope(newEnvelope);
+    // Cloud push in background (silent fallback if offline)
+    pushAttemptToCloud(newAttempt).catch(() => {});
   };
 
   const submitQuiz = (missionId: string, studentId: string, answers: Record<string, string>): QuizHistoryEntry | null => {
@@ -442,6 +489,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
 
     updateEnvelope(newEnvelope);
+    // Cloud push in background (silent fallback if offline)
+    pushQuizHistoryToCloud(historyEntry).catch(() => {});
     return historyEntry;
   };
 
@@ -503,6 +552,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     };
     newEnvelope.reviews.push(newReview);
     updateEnvelope(newEnvelope);
+    // Cloud push in background (silent fallback if offline)
+    pushReviewToCloud(newReview).catch(() => {});
   };
 
   const createMission = (newMission: Mission) => {
@@ -583,6 +634,60 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
   };
 
+  const updateSupabaseCredentials = async (url: string, anonKey: string): Promise<{ success: boolean; message: string }> => {
+    setSupabaseStatus("checking");
+    const res = await testSupabaseConnection(url, anonKey);
+    if (res.success) {
+      saveSupabaseConfig(url, anonKey);
+      setSupabaseConfigState({ url: url.trim(), anonKey: anonKey.trim() });
+      setSupabaseStatus("connected");
+      logAudit("บันทึกการตั้งค่า Supabase", "system", `เชื่อมต่อฐานข้อมูล Supabase Cloud สำเร็จ (${url.trim()})`);
+      return { success: true, message: "เชื่อมต่อ Supabase สำเร็จและบันทึกการตั้งค่าเรียบร้อยแล้ว" };
+    } else {
+      setSupabaseStatus("error");
+      return { success: false, message: res.message };
+    }
+  };
+
+  const testCloudConnection = async (url?: string, anonKey?: string): Promise<{ success: boolean; message: string }> => {
+    return await testSupabaseConnection(url, anonKey);
+  };
+
+  const seedToCloud = async (): Promise<CloudSyncResult> => {
+    const res = await seedAllToSupabase(envelope, users, googleConfig, auditLogs);
+    if (res.success) {
+      logAudit("ซิงก์ข้อมูลขึ้น Supabase", "system", "นำเข้าโครงสร้างและข้อมูลขึ้นฐานข้อมูล Supabase Cloud สำเร็จ");
+    }
+    return res;
+  };
+
+  const fetchCloudData = async (): Promise<{ success: boolean; message: string }> => {
+    const data = await fetchFromSupabase();
+    if (!data) {
+      return { success: false, message: "ไม่สามารถดึงข้อมูลจาก Supabase ได้ กรุณาตรวจสอบการเชื่อมต่อ" };
+    }
+    if (data.users && data.users.length > 0) {
+      setUsers(data.users);
+      localStorage.setItem(USERS_KEY, JSON.stringify(data.users));
+    }
+    if (data.envelope) {
+      const merged: Envelope = {
+        ...envelope,
+        ...(data.envelope.missions ? { missions: data.envelope.missions } : {}),
+        ...(data.envelope.attempts ? { attempts: data.envelope.attempts } : {}),
+        ...(data.envelope.reviews ? { reviews: data.envelope.reviews } : {}),
+        ...(data.envelope.quizHistory ? { quizHistory: data.envelope.quizHistory } : {}),
+        ...(data.envelope.students ? { students: data.envelope.students } : {}),
+      };
+      updateEnvelope(merged);
+    }
+    if (data.auditLogs && data.auditLogs.length > 0) {
+      setAuditLogs(data.auditLogs);
+      localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(data.auditLogs));
+    }
+    return { success: true, message: "ดึงข้อมูลล่าสุดจาก Supabase Cloud สำเร็จ" };
+  };
+
   return (
     <AppContext.Provider value={{
       role, 
@@ -611,7 +716,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       createMission, 
       recordPulseRating,
       resetData,
-      loadSeededClassroom
+      loadSeededClassroom,
+      supabaseStatus,
+      isSupabaseConnected: supabaseStatus === "connected",
+      supabaseConfig: supabaseConfigState,
+      updateSupabaseCredentials,
+      testCloudConnection,
+      seedToCloud,
+      fetchCloudData
     }}>
       {children}
     </AppContext.Provider>
