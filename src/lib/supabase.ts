@@ -38,10 +38,14 @@ export function getStoredSupabaseConfig(): SupabaseConfig {
     };
   }
 
+  // Priority 3: Live School Supabase Instance (Default Cloud Database)
+  const DEFAULT_SUPABASE_URL = "https://yfhudjpsngzegdxaiiwk.supabase.co";
+  const DEFAULT_SUPABASE_KEY = "sb_publishable_2TmBsHl2Ta_dABQXR-esZg_b8F2kqZy";
+
   return {
-    url: "",
-    anonKey: "",
-    isConfigured: false,
+    url: DEFAULT_SUPABASE_URL,
+    anonKey: DEFAULT_SUPABASE_KEY,
+    isConfigured: true,
   };
 }
 
