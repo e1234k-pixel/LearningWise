@@ -1,0 +1,625 @@
+import { createContext, useContext, useState, useEffect } from "react";
+import type { ReactNode } from "react";
+import type { 
+  Envelope, 
+  UserRole, 
+  Draft, 
+  Attempt, 
+  Review, 
+  Mission, 
+  WorkStatus, 
+  QuizHistoryEntry,
+  AuthUser,
+  GoogleWorkspaceConfig,
+  AuditLogEntry,
+  RoleType
+} from "../types";
+import { 
+  initialEnvelope, 
+  createSeededEnvelope, 
+  mockQuizQuestions, 
+  mockStudents,
+  mockAuthUsers,
+  initialGoogleConfig,
+  initialAuditLogs
+} from "../data/mock";
+
+interface AppContextType {
+  role: UserRole;
+  setRole: (role: UserRole) => void;
+  currentUser: AuthUser | null;
+  users: AuthUser[];
+  googleConfig: GoogleWorkspaceConfig;
+  auditLogs: AuditLogEntry[];
+  isGoogleModalOpen: boolean;
+  openGoogleModal: () => void;
+  closeGoogleModal: () => void;
+  loginWithGoogle: (account: AuthUser | { email: string; name: string; avatarUrl?: string }) => void;
+  logout: () => void;
+  updateUserRole: (userId: string, newRole: RoleType) => void;
+  toggleUserStatus: (userId: string) => void;
+  addUser: (newUser: Omit<AuthUser, "id" | "lastLoginAt">) => void;
+  updateGoogleConfig: (config: Partial<GoogleWorkspaceConfig>) => void;
+  logAudit: (action: string, category: "auth" | "academic" | "security" | "system", details: string) => void;
+  envelope: Envelope;
+  saveDraft: (draft: Draft) => void;
+  submitAttempt: (draft: Draft) => void;
+  submitQuiz: (missionId: string, studentId: string, answers: Record<string, string>) => QuizHistoryEntry | null;
+  requestChanges: (attemptId: string, feedback: string) => void;
+  finalizeReview: (attemptId: string, feedback: string, scores: Record<string, number>) => void;
+  getWorkStatus: (studentId: string, missionId: string) => WorkStatus;
+  createMission: (mission: Mission) => void;
+  recordPulseRating: (type: "attempt" | "quiz", id: string, pulseRating: string) => void;
+  resetData: () => void;
+  loadSeededClassroom: () => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+const STORAGE_KEY = "learnwise.classroom.v1";
+const DEMO_ROLE_KEY = "learnwise.demo.session.v1";
+const USERS_KEY = "learnwise.users.v1";
+const AUTH_USER_KEY = "learnwise.auth.user.v1";
+const GOOGLE_CONFIG_KEY = "learnwise.google.config.v1";
+const AUDIT_LOGS_KEY = "learnwise.audit.logs.v1";
+
+export const AppProvider = ({ children }: { children: ReactNode }) => {
+  const [role, setRoleState] = useState<UserRole>({ type: "teacher", id: "teacher-demo" });
+  const [envelope, setEnvelope] = useState<Envelope>(initialEnvelope);
+  const [users, setUsers] = useState<AuthUser[]>(mockAuthUsers);
+  const [currentUser, setCurrentUserState] = useState<AuthUser | null>(mockAuthUsers[1]); // Default to Teacher May
+  const [googleConfig, setGoogleConfig] = useState<GoogleWorkspaceConfig>(initialGoogleConfig);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(initialAuditLogs);
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Load Users
+    const savedUsers = localStorage.getItem(USERS_KEY);
+    let activeUsers = mockAuthUsers;
+    if (savedUsers) {
+      try {
+        activeUsers = JSON.parse(savedUsers);
+        // Ensure all mockAuthUsers are included
+        mockAuthUsers.forEach(mu => {
+          if (!activeUsers.some(u => u.id === mu.id)) {
+            activeUsers.push(mu);
+          }
+        });
+        setUsers(activeUsers);
+      } catch (e) {
+        console.error("Failed to parse users", e);
+        setUsers(mockAuthUsers);
+      }
+    } else {
+      localStorage.setItem(USERS_KEY, JSON.stringify(mockAuthUsers));
+    }
+
+    // Load Google Config
+    const savedConfig = localStorage.getItem(GOOGLE_CONFIG_KEY);
+    if (savedConfig) {
+      try {
+        setGoogleConfig(JSON.parse(savedConfig));
+      } catch (e) {
+        console.error("Failed to parse google config", e);
+      }
+    }
+
+    // Load Audit Logs
+    const savedLogs = localStorage.getItem(AUDIT_LOGS_KEY);
+    if (savedLogs) {
+      try {
+        setAuditLogs(JSON.parse(savedLogs));
+      } catch (e) {
+        console.error("Failed to parse audit logs", e);
+      }
+    }
+
+    // Load Auth User
+    const savedAuthUser = localStorage.getItem(AUTH_USER_KEY);
+    if (savedAuthUser) {
+      try {
+        setCurrentUserState(JSON.parse(savedAuthUser));
+      } catch (e) {
+        console.error("Failed to parse auth user", e);
+      }
+    }
+
+    // Load Envelope
+    const savedEnvelope = localStorage.getItem(STORAGE_KEY);
+    if (savedEnvelope) {
+      try {
+        const parsed: Envelope = JSON.parse(savedEnvelope);
+        initialEnvelope.missions.forEach(m => {
+          if (!parsed.missions.some(x => x.id === m.id)) {
+            parsed.missions.push(m);
+          }
+        });
+        if (!parsed.quizHistory) parsed.quizHistory = [];
+        if (!parsed.questions) {
+          parsed.questions = initialEnvelope.questions;
+        } else {
+          initialEnvelope.questions.forEach(q => {
+            if (!parsed.questions.some(x => x.id === q.id)) {
+              parsed.questions.push(q);
+            }
+          });
+        }
+        if (parsed.students) {
+          parsed.students.forEach(s => {
+            if (!s.learnerProfile) {
+              const def = mockStudents.find(m => m.id === s.id);
+              if (def?.learnerProfile) s.learnerProfile = def.learnerProfile;
+            }
+          });
+        }
+        setEnvelope(parsed);
+      } catch (e) {
+        console.error("Failed to parse envelope", e);
+        const seeded = createSeededEnvelope();
+        setEnvelope(seeded);
+      }
+    } else {
+      const seeded = createSeededEnvelope();
+      setEnvelope(seeded);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+    }
+
+    const savedRole = localStorage.getItem(DEMO_ROLE_KEY);
+    if (savedRole) {
+      try {
+        setRoleState(JSON.parse(savedRole));
+      } catch (e) {
+        console.error("Failed to parse demo role", e);
+      }
+    }
+  }, []);
+
+  const setRole = (newRole: UserRole) => {
+    setRoleState(newRole);
+    localStorage.setItem(DEMO_ROLE_KEY, JSON.stringify(newRole));
+    
+    // Sync current user avatar and profile
+    const matched = users.find(u => {
+      if (newRole.type === "admin") return u.role === "admin" && (u.id === newRole.id || u.id === "admin-001");
+      if (newRole.type === "teacher") return u.role === "teacher" && (u.id === newRole.id || u.id === "teacher-demo");
+      return u.id === newRole.id;
+    });
+
+    if (matched) {
+      setCurrentUserState(matched);
+      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(matched));
+    }
+  };
+
+  const logAudit = (action: string, category: "auth" | "academic" | "security" | "system", details: string) => {
+    const entry: AuditLogEntry = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      userEmail: currentUser?.email || "anonymous@school.ac.th",
+      userName: currentUser?.name || "ระบบสาธิต",
+      role: (role.type as RoleType),
+      category,
+      action,
+      details,
+      ipAddress: "192.168.1.55 (Intranet)"
+    };
+    setAuditLogs(prev => {
+      const updated = [entry, ...prev].slice(0, 100);
+      localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const openGoogleModal = () => setIsGoogleModalOpen(true);
+  const closeGoogleModal = () => setIsGoogleModalOpen(false);
+
+  const loginWithGoogle = (account: AuthUser | { email: string; name: string; avatarUrl?: string }) => {
+    let targetUser = users.find(u => u.email.toLowerCase() === account.email.toLowerCase());
+    
+    if (!targetUser) {
+      // Auto-provision user if allowed
+      const emailDomain = account.email.split("@")[1] || "";
+      const isDomainAllowed = googleConfig.allowedDomains.some(d => emailDomain.toLowerCase().endsWith(d.toLowerCase()));
+      
+      if (googleConfig.enforceDomainRestriction && !isDomainAllowed) {
+        alert(`ไม่อนุญาตให้เข้าสู่ระบบด้วยโดเมน @${emailDomain}\nกรุณาใช้บัญชี Google Workspace ของโรงเรียน (${googleConfig.allowedDomains.map(d => "@" + d).join(", ")})`);
+        return;
+      }
+
+      targetUser = {
+        id: `user-${Date.now()}`,
+        name: account.name || account.email.split("@")[0],
+        email: account.email,
+        avatarUrl: account.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
+        role: googleConfig.defaultRole,
+        department: googleConfig.defaultRole === "student" ? "นักเรียนใหม่ (Google Workspace)" : "ฝ่ายวิชาการ",
+        schoolId: `GEN-${Math.floor(10000 + Math.random() * 90000)}`,
+        status: "active",
+        lastLoginAt: new Date().toISOString()
+      };
+
+      const updatedUsers = [...users, targetUser];
+      setUsers(updatedUsers);
+      localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+    } else {
+      // Update last login
+      targetUser = { ...targetUser, lastLoginAt: new Date().toISOString() };
+      const updatedUsers = users.map(u => u.id === targetUser!.id ? targetUser! : u);
+      setUsers(updatedUsers);
+      localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+    }
+
+    if (targetUser.status === "suspended") {
+      alert("บัญชีนี้ถูกระงับการใช้งานชั่วคราวโดยผู้ดูแลระบบ กรุณาติดต่อฝ่ายสารสนเทศ");
+      return;
+    }
+
+    setCurrentUserState(targetUser);
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(targetUser));
+
+    const newRole: UserRole = { type: targetUser.role, id: targetUser.id };
+    setRoleState(newRole);
+    localStorage.setItem(DEMO_ROLE_KEY, JSON.stringify(newRole));
+
+    logAudit(
+      "Google OAuth 2.0 Sign-In", 
+      "auth", 
+      `เข้าสู่ระบบสำเร็จผ่าน Google Workspace: ${targetUser.email} (${targetUser.role.toUpperCase()})`
+    );
+
+    setIsGoogleModalOpen(false);
+  };
+
+  const logout = () => {
+    if (currentUser) {
+      logAudit("User Sign-Out", "auth", `ออกจากระบบ: ${currentUser.email}`);
+    }
+    setCurrentUserState(null);
+    localStorage.removeItem(AUTH_USER_KEY);
+    // Reset to Teacher Demo as fallback
+    const fallbackRole: UserRole = { type: "teacher", id: "teacher-demo" };
+    setRoleState(fallbackRole);
+    localStorage.setItem(DEMO_ROLE_KEY, JSON.stringify(fallbackRole));
+  };
+
+  const updateUserRole = (userId: string, newRole: RoleType) => {
+    const updatedUsers = users.map(u => {
+      if (u.id === userId) {
+        return { ...u, role: newRole };
+      }
+      return u;
+    });
+    setUsers(updatedUsers);
+    localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+    
+    if (currentUser?.id === userId) {
+      const updatedSelf = { ...currentUser, role: newRole };
+      setCurrentUserState(updatedSelf);
+      setRoleState({ type: newRole, id: userId });
+    }
+
+    logAudit("Update User Role", "security", `ปรับเปลี่ยนสิทธิ์ผู้ใช้ ${userId} เป็น ${newRole.toUpperCase()}`);
+  };
+
+  const toggleUserStatus = (userId: string) => {
+    const updatedUsers = users.map(u => {
+      if (u.id === userId) {
+        const newStatus = u.status === "active" ? ("suspended" as const) : ("active" as const);
+        logAudit("Toggle Account Status", "security", `เปลี่ยนสถานะบัญชี ${u.email} เป็น ${newStatus}`);
+        return { ...u, status: newStatus };
+      }
+      return u;
+    });
+    setUsers(updatedUsers);
+    localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+  };
+
+  const addUser = (newUser: Omit<AuthUser, "id" | "lastLoginAt">) => {
+    const created: AuthUser = {
+      ...newUser,
+      id: `user-${Date.now()}`,
+      lastLoginAt: new Date().toISOString()
+    };
+    const updated = [...users, created];
+    setUsers(updated);
+    localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+    logAudit("Provision New User", "security", `สร้างผู้ใช้ใหม่: ${created.email} (${created.role})`);
+  };
+
+  const updateGoogleConfig = (newConfig: Partial<GoogleWorkspaceConfig>) => {
+    const merged = { ...googleConfig, ...newConfig };
+    setGoogleConfig(merged);
+    localStorage.setItem(GOOGLE_CONFIG_KEY, JSON.stringify(merged));
+    logAudit("Update Google Workspace Config", "system", `อัปเดตการตั้งค่าโดเมน Google Workspace: ${merged.allowedDomains.join(", ")}`);
+  };
+
+  const updateEnvelope = (newEnvelope: Envelope) => {
+    newEnvelope.revision += 1;
+    setEnvelope(newEnvelope);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newEnvelope));
+  };
+
+  const saveDraft = (draft: Draft) => {
+    const newEnvelope = { ...envelope };
+    const existingIdx = newEnvelope.drafts.findIndex(
+      (d) => d.studentId === draft.studentId && d.missionId === draft.missionId
+    );
+    
+    // Add participation if first time
+    if (!newEnvelope.participations.find(p => p.studentId === draft.studentId && p.missionId === draft.missionId)) {
+      newEnvelope.participations.push({
+        studentId: draft.studentId,
+        missionId: draft.missionId,
+        startedAt: new Date().toISOString()
+      });
+    }
+
+    if (existingIdx >= 0) {
+      newEnvelope.drafts[existingIdx] = draft;
+    } else {
+      newEnvelope.drafts.push(draft);
+    }
+    updateEnvelope(newEnvelope);
+  };
+
+  const submitAttempt = (draft: Draft) => {
+    const newEnvelope = { ...envelope };
+    
+    const previousAttempts = newEnvelope.attempts.filter(
+      (a) => a.studentId === draft.studentId && a.missionId === draft.missionId
+    );
+    
+    const mission = newEnvelope.missions.find(m => m.id === draft.missionId);
+    if (!mission) return;
+
+    const newAttempt: Attempt = {
+      id: `attempt-${Date.now()}`,
+      studentId: draft.studentId,
+      missionId: draft.missionId,
+      attemptNo: previousAttempts.length + 1,
+      type: mission.type,
+      content: draft.content,
+      language: draft.language,
+      revisionNote: draft.revisionNote,
+      submittedAt: new Date().toISOString(),
+      submissionToken: `token-${Date.now()}`
+    };
+
+    newEnvelope.attempts.push(newAttempt);
+    // clear draft
+    newEnvelope.drafts = newEnvelope.drafts.filter(
+      (d) => !(d.studentId === draft.studentId && d.missionId === draft.missionId)
+    );
+    
+    updateEnvelope(newEnvelope);
+  };
+
+  const submitQuiz = (missionId: string, studentId: string, answers: Record<string, string>): QuizHistoryEntry | null => {
+    const newEnvelope = { ...envelope };
+    const mission = newEnvelope.missions.find(m => m.id === missionId);
+    if (!mission || mission.type !== "quiz") return null;
+
+    const questions = mission.config.questions || mockQuizQuestions;
+    let correctCount = 0;
+
+    questions.forEach(q => {
+      if (answers[q.id] === q.correctOptionId) {
+        correctCount++;
+      }
+    });
+
+    const maxScore = questions.length;
+    const percentScore = Number(((correctCount / maxScore) * 100).toFixed(1));
+    const passThreshold = mission.config.passPercent || 80;
+    const passed = percentScore >= passThreshold;
+
+    const previousQuizAttempts = newEnvelope.quizHistory.filter(
+      h => h.missionId === missionId && h.studentId === studentId
+    );
+
+    const historyEntry: QuizHistoryEntry = {
+      id: `quiz-attempt-${Date.now()}`,
+      missionId,
+      studentId,
+      attemptNo: previousQuizAttempts.length + 1,
+      answers,
+      score: correctCount,
+      maxScore,
+      percentScore,
+      passed,
+      submittedAt: new Date().toISOString()
+    };
+
+    newEnvelope.quizHistory.push(historyEntry);
+
+    // Also mark participation if not present
+    if (!newEnvelope.participations.some(p => p.studentId === studentId && p.missionId === missionId)) {
+      newEnvelope.participations.push({
+        studentId,
+        missionId,
+        startedAt: new Date().toISOString()
+      });
+    }
+
+    updateEnvelope(newEnvelope);
+    return historyEntry;
+  };
+
+  const requestChanges = (attemptId: string, feedback: string) => {
+    const newEnvelope = { ...envelope };
+    const newReview: Review = {
+      id: `review-${Date.now()}`,
+      attemptId,
+      teacherId: "teacher-demo",
+      publicationStatus: "published",
+      decision: "request_changes",
+      feedback,
+      criterionScores: null,
+      rawScore: null,
+      maxRawScore: 6,
+      percentScore: null,
+      outcome: "not-assessed",
+      updatedAt: new Date().toISOString(),
+      publishedAt: new Date().toISOString(),
+    };
+    newEnvelope.reviews.push(newReview);
+    updateEnvelope(newEnvelope);
+  };
+
+  const finalizeReview = (attemptId: string, feedback: string, scores: Record<string, number>) => {
+    const newEnvelope = { ...envelope };
+    const attempt = newEnvelope.attempts.find(a => a.id === attemptId);
+    if (!attempt) return;
+    
+    const mission = newEnvelope.missions.find(m => m.id === attempt.missionId);
+    if (!mission || !mission.config.rubric) return;
+
+    const rubric = mission.config.rubric;
+    let rawScore = 0;
+    Object.values(scores).forEach(s => rawScore += s);
+    
+    let isPass = rawScore >= rubric.passRawPoints;
+    for (const reqId of rubric.requiredFullScoreCriterionIds) {
+      const crit = rubric.criteria.find(c => c.id === reqId);
+      if (crit && scores[reqId] < crit.maxPoints) {
+        isPass = false;
+      }
+    }
+
+    const newReview: Review = {
+      id: `review-${Date.now()}`,
+      attemptId,
+      teacherId: "teacher-demo",
+      publicationStatus: "published",
+      decision: "finalize",
+      feedback,
+      criterionScores: scores,
+      rawScore,
+      maxRawScore: 6,
+      percentScore: Number(((rawScore / 6) * 100).toFixed(1)),
+      outcome: isPass ? "meets-criteria" : "needs-practice",
+      updatedAt: new Date().toISOString(),
+      publishedAt: new Date().toISOString(),
+    };
+    newEnvelope.reviews.push(newReview);
+    updateEnvelope(newEnvelope);
+  };
+
+  const createMission = (newMission: Mission) => {
+    const newEnvelope = { ...envelope };
+    newEnvelope.missions.unshift(newMission);
+    updateEnvelope(newEnvelope);
+  };
+
+  const getWorkStatus = (studentId: string, missionId: string): WorkStatus => {
+    const mission = envelope.missions.find(m => m.id === missionId);
+    
+    // Quiz handling
+    if (mission && mission.type === "quiz") {
+      const history = envelope.quizHistory.filter(h => h.studentId === studentId && h.missionId === missionId);
+      if (history.length > 0) return "reviewed";
+      const hasParticipation = envelope.participations.some(p => p.studentId === studentId && p.missionId === missionId);
+      if (hasParticipation) return "started";
+      return "not-started";
+    }
+
+    // Short-answer & Coding handling
+    const attempts = envelope.attempts.filter(a => a.studentId === studentId && a.missionId === missionId);
+    
+    if (attempts.length > 0) {
+      const latestAttempt = attempts[attempts.length - 1];
+      const reviews = envelope.reviews.filter(r => r.attemptId === latestAttempt.id && r.publicationStatus === "published");
+      
+      if (reviews.length > 0) {
+        const latestReview = reviews[reviews.length - 1];
+        if (latestReview.decision === "finalize") return "reviewed";
+        if (latestReview.decision === "request_changes") return "changes-requested";
+      }
+      return "submitted";
+    }
+
+    const hasDraft = envelope.drafts.some(d => d.studentId === studentId && d.missionId === missionId);
+    const hasParticipation = envelope.participations.some(p => p.studentId === studentId && p.missionId === missionId);
+    
+    if (hasDraft || hasParticipation) return "started";
+    
+    return "not-started";
+  };
+
+  const recordPulseRating = (type: "attempt" | "quiz", id: string, pulseRating: string) => {
+    const newEnvelope = { ...envelope };
+    if (type === "attempt") {
+      const att = newEnvelope.attempts.find(a => a.id === id);
+      if (att) {
+        att.pulseRating = pulseRating;
+      }
+    } else {
+      const q = newEnvelope.quizHistory.find(item => item.id === id);
+      if (q) {
+        q.pulseRating = pulseRating;
+      }
+    }
+    updateEnvelope(newEnvelope);
+  };
+
+  const resetData = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(DEMO_ROLE_KEY);
+    localStorage.removeItem(USERS_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem(GOOGLE_CONFIG_KEY);
+    localStorage.removeItem(AUDIT_LOGS_KEY);
+    setEnvelope(initialEnvelope);
+    setUsers(mockAuthUsers);
+    setCurrentUserState(mockAuthUsers[1]);
+    setGoogleConfig(initialGoogleConfig);
+    setAuditLogs(initialAuditLogs);
+    setRoleState({ type: "teacher", id: "teacher-demo" });
+  };
+
+  const loadSeededClassroom = () => {
+    const seeded = createSeededEnvelope();
+    setEnvelope(seeded);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+  };
+
+  return (
+    <AppContext.Provider value={{
+      role, 
+      setRole, 
+      currentUser,
+      users,
+      googleConfig,
+      auditLogs,
+      isGoogleModalOpen,
+      openGoogleModal,
+      closeGoogleModal,
+      loginWithGoogle,
+      logout,
+      updateUserRole,
+      toggleUserStatus,
+      addUser,
+      updateGoogleConfig,
+      logAudit,
+      envelope, 
+      saveDraft, 
+      submitAttempt, 
+      submitQuiz, 
+      requestChanges, 
+      finalizeReview, 
+      getWorkStatus, 
+      createMission, 
+      recordPulseRating,
+      resetData,
+      loadSeededClassroom
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error("useApp must be used within AppProvider");
+  return context;
+};
