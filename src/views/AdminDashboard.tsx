@@ -362,21 +362,21 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 shadow-xl border border-slate-800">
-        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/85 via-purple-950/80 to-slate-900/85 text-white p-6 sm:p-8 shadow-sm border border-purple-300/30 backdrop-blur-md">
+        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                <ShieldCheck size={14} className="text-purple-400" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-400/20 text-purple-200 border border-purple-400/30">
+                <ShieldCheck size={14} className="text-purple-300" />
                 <span>ADMIN MASTER CONSOLE</span>
               </span>
-              <span className="text-xs text-slate-400 font-mono">Google Workspace for Education</span>
+              <span className="text-xs text-purple-200/80 font-mono">Google Workspace for Education</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               ศูนย์บริหารจัดการระบบและสิทธิ์ผู้ใช้งาน
             </h1>
-            <p className="text-slate-300 text-xs sm:text-sm mt-1 max-w-2xl">
+            <p className="text-purple-100/80 text-xs sm:text-sm mt-1 max-w-2xl">
               {googleConfig.schoolName} • จัดการสิทธิ์การเข้าถึง ครู นักเรียน นโยบายความปลอดภัย และการเชื่อมโยง Google Workspace
             </p>
           </div>
@@ -389,7 +389,7 @@ export const AdminDashboard: React.FC = () => {
                   alert("ซิงก์ข้อมูลบัญชีและห้องเรียนจาก Google Workspace เรียบร้อยแล้ว (100% Synchronized)");
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/10 backdrop-blur-sm cursor-pointer transition-all active:scale-95 shadow-md"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold border border-white/20 backdrop-blur-sm cursor-pointer transition-all active:scale-95 shadow-xs"
             >
               <RefreshCw size={15} />
               <span>ซิงก์ Workspace Directory</span>
@@ -399,11 +399,11 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Lamborghini Master Control Telemetry Cluster */}
-      <div className="rounded-3xl bg-gradient-to-b from-slate-950 to-slate-900 border border-slate-800/80 p-5 shadow-2xl text-slate-100">
+      <div className="rounded-3xl bg-slate-900/80 backdrop-blur-md border border-purple-300/20 p-5 shadow-sm text-slate-100">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-400 font-mono">
+            <span className="text-xs font-extrabold uppercase tracking-widest text-emerald-300 font-mono">
               LAMBORGHINI MASTER ADMIN TELEMETRY
             </span>
           </div>
@@ -472,13 +472,13 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Main Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-purple-100/80 pb-2 overflow-x-auto">
         <button
           onClick={() => setActiveTab("users")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "users"
-              ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-sm shadow-purple-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-purple-50/60"
           }`}
         >
           <Users size={16} />
@@ -489,8 +489,8 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab("google")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "google"
-              ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-sm shadow-purple-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-purple-50/60"
           }`}
         >
           <Globe size={16} />
@@ -501,14 +501,14 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab("supabase")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "supabase"
-              ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm shadow-emerald-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-purple-50/60"
           }`}
         >
           <Database size={16} />
           <span>⚡ ฐานข้อมูล Supabase</span>
           {isSupabaseConnected ? (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-400/20 text-emerald-100 border border-emerald-300/40">
               Live
             </span>
           ) : (
@@ -522,8 +522,8 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab("audit")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "audit"
-              ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-sm shadow-purple-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-purple-50/60"
           }`}
         >
           <FileText size={16} />
@@ -534,8 +534,8 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab("classes")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "classes"
-              ? "bg-purple-600 text-white shadow-md shadow-purple-500/20"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-sm shadow-purple-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-purple-50/60"
           }`}
         >
           <School size={16} />
@@ -546,14 +546,14 @@ export const AdminDashboard: React.FC = () => {
           onClick={() => setActiveTab("ai")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
             activeTab === "ai"
-              ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/20"
-              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              ? "bg-gradient-to-r from-purple-500 via-indigo-500 to-pink-500 text-white shadow-sm shadow-purple-200"
+              : "text-slate-600 hover:text-slate-900 hover:bg-purple-50/60"
           }`}
         >
           <Bot size={16} />
           <span>🤖 ตั้งค่า AI Tutor (Gemini)</span>
           {aiTutorConfig.apiKey ? (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-400/20 text-emerald-100 border border-emerald-300/40">
               API Ready
             </span>
           ) : (

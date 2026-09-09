@@ -178,16 +178,16 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
   return (
     <div className="space-y-4 animate-fadeIn">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/90 backdrop-blur-md p-4 sm:p-5 rounded-3xl border border-purple-100/70 shadow-xs">
         <div className="flex items-center gap-3">
           <button 
             onClick={onBack} 
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 hover:-translate-y-0.5 active:scale-95 px-3 py-2 rounded-xl focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none transition-all cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-purple-50/50 hover:-translate-y-0.5 active:scale-95 px-3.5 py-2 rounded-2xl border border-purple-100/70 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none transition-all cursor-pointer shadow-xs"
           >
             <ArrowLeft size={14} />
             <span>กลับแดชบอร์ด</span>
           </button>
-          <div className="h-5 w-px bg-slate-200 hidden sm:block"></div>
+          <div className="h-5 w-px bg-purple-100 hidden sm:block"></div>
           <div>
             <h1 className="font-bold text-base text-slate-900 leading-tight">
               {isQuiz ? "รายงานผลแบบทดสอบ: " : "คิวตรวจงาน: "} {mission.title}
@@ -203,25 +203,25 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
 
         {/* Demo Helper Pill / Auto-Graded Pill */}
         {isQuiz ? (
-          <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-            <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1.5">
+          <div className="flex items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-purple-50">
+            <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/80 flex items-center gap-1.5">
               <CheckCircle2 size={14} className="text-purple-600" />
               <span>ระบบตรวจอัตโนมัติ 100% (Auto-Graded)</span>
             </span>
           </div>
         ) : (
-          <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+          <div className="flex flex-wrap items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-purple-50">
             <span className="text-xs text-slate-500 hidden md:inline">ข้อความตัวอย่างสำหรับ Demo:</span>
             <button
               onClick={() => fillTemplateFeedback("round1")}
-              className="text-[11px] font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 hover:-translate-y-0.5 active:scale-95 border border-amber-200 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
+              className="text-[11px] font-semibold text-amber-800 bg-amber-50/90 hover:bg-amber-100 hover:-translate-y-0.5 active:scale-95 border border-amber-200/80 px-3 py-1.5 rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
               title="ใส่ Feedback รอบที่ 1 ตามเอกสาร Demo"
             >
               ข้อความส่งกลับแก้ (รอบ 1)
             </button>
             <button
               onClick={() => fillTemplateFeedback("round2")}
-              className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 hover:-translate-y-0.5 active:scale-95 border border-emerald-200 px-2.5 py-1.5 rounded-lg transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none"
+              className="text-[11px] font-semibold text-emerald-800 bg-emerald-50/90 hover:bg-emerald-100 hover:-translate-y-0.5 active:scale-95 border border-emerald-200/80 px-3 py-1.5 rounded-xl transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none"
               title="ใส่ Feedback ปิดงานและคะแนน 6/6 ตามเอกสาร Demo"
             >
               ข้อความตรวจผ่าน (รอบ 2)
@@ -231,11 +231,11 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
       </div>
 
       {/* Mobile / Tablet Tab Switcher (Visible on < lg) */}
-      <div className="lg:hidden flex rounded-xl bg-slate-200/80 p-1 text-xs font-semibold">
+      <div className="lg:hidden flex rounded-2xl bg-purple-50/70 border border-purple-100/60 p-1 text-xs font-semibold">
         <button
           onClick={() => setMobileTab("queue")}
-          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer ${
-            mobileTab === "queue" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+          className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
+            mobileTab === "queue" ? "bg-white text-purple-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
           }`}
         >
           <ListFilter size={14} />
@@ -246,8 +246,8 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
         </button>
         <button
           onClick={() => setMobileTab("grading")}
-          className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-2 transition cursor-pointer ${
-            mobileTab === "grading" ? "bg-white text-blue-700 shadow-xs" : "text-slate-600 hover:text-slate-900"
+          className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-2 transition cursor-pointer ${
+            mobileTab === "grading" ? "bg-white text-purple-700 shadow-xs" : "text-slate-600 hover:text-slate-900"
           }`}
         >
           <User size={14} />
@@ -258,17 +258,17 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
       {/* Main Grid: Queue on Left, Work on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left Queue Panel (4 cols) - Mobile hidden if on grading tab */}
-        <div className={`lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden ${
+        <div className={`lg:col-span-4 bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 shadow-xs overflow-hidden ${
           mobileTab === "queue" ? "block" : "hidden lg:block"
         }`}>
-          <div className="p-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
-            <span className="font-bold text-xs uppercase tracking-wider text-slate-600">รายชื่อนักเรียนในห้อง</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">
+          <div className="p-4 border-b border-purple-50 bg-purple-50/40 flex items-center justify-between">
+            <span className="font-bold text-xs uppercase tracking-wider text-purple-900">รายชื่อนักเรียนในห้อง</span>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-100/80 text-purple-800">
               {envelope.students.length} คน
             </span>
           </div>
 
-          <div className="divide-y divide-slate-100 max-h-[650px] overflow-y-auto">
+          <div className="divide-y divide-purple-50/60 max-h-[650px] overflow-y-auto">
             {/* 1. Pending Queue */}
             {pendingStudents.length > 0 && (
               <div className="p-2 bg-amber-50/40">
@@ -284,14 +284,14 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                     <button
                       key={id}
                       onClick={() => selectStudentAndSwitchTab(id)}
-                      className={`w-full text-left p-3 rounded-xl my-1 flex items-center justify-between transition-all duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
+                      className={`w-full text-left p-3 rounded-2xl my-1 flex items-center justify-between transition-all duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                         isSelected 
                           ? "bg-amber-500 text-white shadow-sm font-semibold scale-[1.01]" 
                           : "hover:bg-amber-100/60 hover:-translate-y-0.5 text-slate-800"
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${
                           isSelected ? "bg-white/20 text-white" : "bg-amber-100 text-amber-800"
                         }`}>
                           {s?.name.slice(0, 2)}
@@ -331,15 +331,15 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                     <button
                       key={id}
                       onClick={() => selectStudentAndSwitchTab(id)}
-                      className={`w-full text-left p-3 rounded-xl my-1 flex items-center justify-between transition-all duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                      className={`w-full text-left p-3 rounded-2xl my-1 flex items-center justify-between transition-all duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none ${
                         isSelected 
-                          ? isQuiz ? "bg-purple-600 text-white shadow-sm font-semibold scale-[1.01]" : "bg-blue-600 text-white shadow-sm font-semibold scale-[1.01]" 
-                          : "hover:bg-slate-50 hover:-translate-y-0.5 text-slate-800"
+                          ? isQuiz ? "bg-purple-600 text-white shadow-sm font-semibold scale-[1.01]" : "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm font-semibold scale-[1.01]" 
+                          : "hover:bg-purple-50/50 hover:-translate-y-0.5 text-slate-800"
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${
-                          isSelected ? "bg-white/20 text-white" : isQuiz ? "bg-purple-100 text-purple-800" : "bg-slate-100 text-slate-600"
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${
+                          isSelected ? "bg-white/20 text-white" : isQuiz ? "bg-purple-100 text-purple-800" : "bg-indigo-50 text-indigo-700"
                         }`}>
                           {s?.name.slice(0, 2)}
                         </div>
@@ -350,7 +350,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                           </div>
                         </div>
                       </div>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-medium ${
                         isSelected 
                           ? "bg-white/20 text-white" 
                           : isQuiz 
@@ -380,7 +380,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                     <button
                       key={id}
                       onClick={() => selectStudentAndSwitchTab(id)}
-                      className={`w-full text-left p-2.5 rounded-xl my-0.5 flex items-center justify-between transition-all duration-150 cursor-pointer ${
+                      className={`w-full text-left p-2.5 rounded-2xl my-0.5 flex items-center justify-between transition-all duration-150 cursor-pointer ${
                         isSelected ? "bg-slate-800 text-white" : "hover:bg-slate-100 text-slate-600"
                       }`}
                     >
@@ -399,16 +399,16 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
           mobileTab === "grading" ? "block" : "hidden lg:block"
         }`}>
           {!activeStudentId ? (
-            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 shadow-xs">
+            <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-12 text-center text-slate-400 shadow-xs">
               <User size={32} className="mx-auto mb-2 opacity-40" />
               <p>กรุณาเลือกนักเรียนจากคิวตรวจด้านซ้าย</p>
             </div>
           ) : isQuiz ? (
             <div className="space-y-5">
               {/* Student Header Card for Quiz */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
+              <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-base shadow-inner">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-100/80 text-purple-800 flex items-center justify-center font-bold text-base shadow-xs">
                     {activeStudent?.name.slice(0, 2)}
                   </div>
                   <div>
@@ -447,10 +447,10 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
               {latestQuiz ? (
                 <>
                   {/* Score Card */}
-                  <div className={`p-5 rounded-2xl border flex flex-wrap items-center justify-between gap-4 shadow-xs ${
+                  <div className={`p-5 rounded-3xl border flex flex-wrap items-center justify-between gap-4 shadow-xs ${
                     latestQuiz.passed 
-                      ? "bg-gradient-to-r from-emerald-50/80 to-teal-50/40 border-emerald-200 text-emerald-950" 
-                      : "bg-gradient-to-r from-amber-50/80 to-orange-50/40 border-amber-200 text-amber-950"
+                      ? "bg-gradient-to-r from-emerald-50/90 to-teal-50/60 border-emerald-200 text-emerald-950" 
+                      : "bg-gradient-to-r from-amber-50/90 to-orange-50/60 border-amber-200 text-amber-950"
                   }`}>
                     <div className="flex items-center gap-3.5">
                       <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-2xl shadow-xs">
@@ -465,7 +465,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                         </div>
                       </div>
                     </div>
-                    <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/90 border border-slate-200 text-slate-700">
+                    <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/90 border border-slate-200/80 text-slate-700">
                       เกณฑ์ผ่าน: {mission.config.passPercent || 80}% (ต้องได้ 3/3 ข้อ)
                     </span>
                   </div>
@@ -482,10 +482,10 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                       const isCorrect = studentAnswerId === q.correctOptionId;
 
                       return (
-                        <div key={q.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+                        <div key={q.id} className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 shadow-xs space-y-3">
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-start gap-3">
-                              <span className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${
+                              <span className={`w-7 h-7 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${
                                 isCorrect ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
                               }`}>
                                 {idx + 1}
@@ -495,7 +495,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                               </div>
                             </div>
 
-                            <span className={`text-xs font-bold px-2.5 py-1 rounded-full shrink-0 flex items-center gap-1 ${
+                            <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 flex items-center gap-1 ${
                               isCorrect ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "bg-rose-50 text-rose-800 border border-rose-200"
                             }`}>
                               {isCorrect ? <Check size={13} /> : <X size={13} />}
@@ -509,7 +509,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                               const isChosen = studentAnswerId === opt.id;
                               const isTheCorrectOption = q.correctOptionId === opt.id;
 
-                              let rowClass = "bg-slate-50/50 border-slate-200 text-slate-600 opacity-60";
+                              let rowClass = "bg-slate-50/50 border-slate-200/70 text-slate-600 opacity-60";
                               if (isTheCorrectOption) {
                                 rowClass = "bg-emerald-50/90 border-emerald-300 text-emerald-950 font-semibold ring-1 ring-emerald-500/20";
                               } else if (isChosen && !isTheCorrectOption) {
@@ -517,7 +517,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                               }
 
                               return (
-                                <div key={opt.id} className={`p-3 rounded-xl border flex items-center justify-between ${rowClass}`}>
+                                <div key={opt.id} className={`p-3 rounded-2xl border flex items-center justify-between ${rowClass}`}>
                                   <div className="flex items-center gap-2.5">
                                     <span className="font-bold">{opt.label}.</span>
                                     <span>{opt.text}</span>
@@ -533,7 +533,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                           </div>
 
                           {/* Explanation */}
-                          <div className="p-3.5 bg-indigo-50/60 border border-indigo-100 rounded-xl text-xs space-y-1 ml-0 sm:pl-4">
+                          <div className="p-3.5 bg-indigo-50/60 border border-indigo-100 rounded-2xl text-xs space-y-1 ml-0 sm:pl-4">
                             <span className="font-bold text-indigo-900 flex items-center gap-1.5">
                               <Sparkles size={13} className="text-indigo-600" />
                               <span>คำอธิบายเฉลย:</span>
@@ -549,11 +549,11 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
 
                   {/* Previous attempts if retaken */}
                   {studentQuizHistory.length > 1 && (
-                    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+                    <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 shadow-xs space-y-3">
                       <h4 className="font-bold text-xs uppercase tracking-wider text-slate-600">
                         ประวัติการทำแบบทดสอบ ({studentQuizHistory.length} ครั้ง)
                       </h4>
-                      <div className="divide-y divide-slate-100 text-xs">
+                      <div className="divide-y divide-purple-50 text-xs">
                         {studentQuizHistory.map((h) => (
                           <div key={h.id} className="py-2.5 flex items-center justify-between">
                             <div>
@@ -562,7 +562,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                             </div>
                             <div className="flex items-center gap-3">
                               <span className="font-semibold">{h.score}/{h.maxScore} ({h.percentScore}%)</span>
-                              <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                              <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
                                 h.passed ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
                               }`}>
                                 {h.passed ? "ผ่าน" : "ควรทบทวน"}
@@ -575,7 +575,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                   )}
                 </>
               ) : (
-                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 shadow-xs">
+                <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-12 text-center text-slate-400 shadow-xs">
                   <Clock size={32} className="mx-auto mb-2 opacity-40 text-slate-400" />
                   <p className="font-medium text-slate-600">นักเรียนคนนี้ยังไม่ได้เริ่มทำแบบทดสอบนี้</p>
                   <p className="text-xs text-slate-400 mt-1">เมื่อนักเรียนทำและส่งแบบทดสอบ ระบบจะตรวจและแสดงผลลัพธ์ที่นี่โดยอัตโนมัติ</p>
@@ -585,9 +585,9 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
           ) : (
             <>
               {/* Student Header Card */}
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
+              <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-base shadow-inner">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-100/80 text-indigo-800 flex items-center justify-center font-bold text-base shadow-xs">
                     {activeStudent?.name.slice(0, 2)}
                   </div>
                   <div>
@@ -631,15 +631,15 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
 
               {/* Previous Rounds Accordion / Comparison */}
               {studentAttempts.length > 1 && (
-                <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2 font-bold text-xs text-slate-700 border-b border-slate-200/80 pb-2.5">
+                <div className="bg-purple-50/40 border border-purple-100/80 rounded-3xl p-5 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 font-bold text-xs text-slate-700 border-b border-purple-100 pb-2.5">
                     <div className="flex items-center gap-2">
                       <History size={15} className="text-indigo-600" />
                       <span>หลักฐานเปรียบเทียบคำตอบรอบก่อนหน้า (รอบที่ 1 ถึง {studentAttempts.length - 1})</span>
                     </div>
                     <button
                       onClick={() => setIsBeforeAfterOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-xs cursor-pointer hover:-translate-y-0.5 transition-all active:scale-95"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold text-xs shadow-xs cursor-pointer hover:-translate-y-0.5 transition-all active:scale-95"
                     >
                       <Sparkles size={13} />
                       <span>🔍 เปรียบเทียบก่อน–หลัง (Before & After)</span>
@@ -671,10 +671,10 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
               )}
 
               {/* Latest Answer Card */}
-              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 shadow-xs space-y-3">
+                <div className="flex items-center justify-between border-b border-purple-50 pb-3">
                   <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
                     <span>คำตอบรอบล่าสุด (รอบที่ {latestAttempt?.attemptNo || 1})</span>
                   </div>
                   <span className="text-xs text-slate-400">
@@ -682,16 +682,16 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                   </span>
                 </div>
 
-                <div className={`p-4 sm:p-5 rounded-xl border text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                <div className={`p-4 sm:p-5 rounded-2xl border text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
                   mission.type === "coding"
                     ? "bg-slate-950 text-emerald-300 font-mono border-slate-800 shadow-inner"
-                    : "bg-blue-50/30 text-slate-800 font-sans border-blue-100"
+                    : "bg-purple-50/30 text-slate-800 font-sans border-purple-100"
                 }`}>
                   {latestAttempt ? latestAttempt.content : <span className="text-slate-400 italic font-sans">นักเรียนคนนี้ยังไม่ได้ส่งคำตอบ</span>}
                 </div>
 
                 {latestAttempt?.revisionNote && (
-                  <div className="p-3.5 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs space-y-1">
+                  <div className="p-3.5 bg-indigo-50/70 border border-indigo-100 rounded-2xl text-xs space-y-1">
                     <span className="font-bold text-indigo-900 flex items-center gap-1.5">
                       <Sparkles size={13} className="text-indigo-600" />
                       <span>สิ่งที่นักเรียนระบุว่าปรับแก้ในรอบนี้ (Reflection Note):</span>
@@ -705,15 +705,15 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
 
               {/* Grading and Review Controls (Only shown if submitted and not finalized) */}
               {latestAttempt && currentWorkStatus === "submitted" && (
-                <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-6">
+                <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 sm:p-6 shadow-xs space-y-6">
                   {/* Rubric Criteria Selection */}
                   <div className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-purple-50 pb-3">
                       <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                        <ListChecks size={16} className="text-indigo-600" />
+                        <ListChecks size={16} className="text-purple-600" />
                         <span>เกณฑ์การให้คะแนน Rubric (รวม 6 คะแนน)</span>
                       </div>
-                      <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200">
+                      <span className="text-xs font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-200/80">
                         คะแนนรวมขณะนี้: {currentTotalScore} / 6
                       </span>
                     </div>
@@ -724,18 +724,18 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                         const isRequiredFull = mission.config.rubric?.requiredFullScoreCriterionIds.includes(crit.id);
 
                         return (
-                          <div key={crit.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3">
+                          <div key={crit.id} className="p-4 rounded-2xl border border-purple-100/80 bg-white/70 space-y-3">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                               <span className="font-bold text-xs sm:text-sm text-slate-800">
                                 {crit.label}
                                 {isRequiredFull && (
-                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded ml-2">
+                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full ml-2">
                                     *ต้องได้เต็ม 2/2 เพื่อผ่าน
                                   </span>
                                 )}
                               </span>
                               <span className="text-xs font-semibold text-slate-500">
-                                คะแนนที่เลือก: <b className="text-blue-600">{currentScore !== undefined ? `${currentScore} คะแนน` : "ยังไม่เลือก"}</b>
+                                คะแนนที่เลือก: <b className="text-purple-600">{currentScore !== undefined ? `${currentScore} คะแนน` : "ยังไม่เลือก"}</b>
                               </span>
                             </div>
 
@@ -748,10 +748,10 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                                   <button
                                     key={ptsStr}
                                     onClick={() => handleScoreChange(crit.id, pts)}
-                                    className={`p-3 rounded-xl text-left border transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                                    className={`p-3.5 rounded-2xl text-left border transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none ${
                                       isSelected 
-                                        ? "bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20 scale-[1.01]" 
-                                        : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 hover:-translate-y-0.5 active:scale-95"
+                                        ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-purple-600 shadow-sm scale-[1.01]" 
+                                        : "bg-white text-slate-700 border-purple-100/90 hover:bg-purple-50/50 hover:border-purple-200 hover:-translate-y-0.5 active:scale-95"
                                     }`}
                                   >
                                     <div className="flex items-center justify-between w-full">
@@ -760,7 +760,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                                       </span>
                                       {isSelected && <Check size={14} className="text-white" />}
                                     </div>
-                                    <p className={`text-[11px] line-clamp-3 leading-relaxed ${isSelected ? "text-blue-100" : "text-slate-500"}`}>
+                                    <p className={`text-[11px] line-clamp-3 leading-relaxed ${isSelected ? "text-purple-100" : "text-slate-500"}`}>
                                       {crit.levels[ptsStr]}
                                     </p>
                                   </button>
@@ -774,7 +774,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
 
                     {/* Result Preview Callout */}
                     {allCriteriaAnswered && (
-                      <div className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-2 text-xs font-bold ${
+                      <div className={`p-4 rounded-2xl border flex flex-wrap items-center justify-between gap-2 text-xs font-bold ${
                         meetsPassCriteria 
                           ? "bg-emerald-50 text-emerald-900 border-emerald-200" 
                           : "bg-amber-50 text-amber-900 border-amber-200"
@@ -793,17 +793,17 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
 
                   {/* AI Adaptive Copilot Recommendation Card */}
                     {activeStudent && (
-                      <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-950 via-slate-900 to-blue-950 text-white border border-indigo-500/30 shadow-sm space-y-2.5">
+                      <div className="p-5 rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 text-white border border-purple-500/30 shadow-md space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-lg bg-indigo-500/30 border border-indigo-400/40 flex items-center justify-center text-xs">
+                            <div className="w-7 h-7 rounded-xl bg-purple-500/30 border border-purple-400/40 flex items-center justify-center text-xs">
                               🤖
                             </div>
                             <span className="font-black text-xs text-white">
                               LearnWise AI Copilot • คำแนะนำการปรับภารกิจเฉพาะบุคคล
                             </span>
                           </div>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
                             {aiRec.tag}
                           </span>
                         </div>
@@ -812,7 +812,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                           {aiRec.message}
                         </p>
 
-                        <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-xs space-y-1">
+                        <div className="p-3 rounded-2xl bg-white/5 border border-white/10 text-xs space-y-1">
                           <div className="text-[11px] font-bold text-amber-300">
                             📌 ก้าวถัดไปที่แนะนำสำหรับผู้เรียนคนนี้:
                           </div>
@@ -825,7 +825,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                           <button
                             type="button"
                             onClick={() => setFeedback(prev => prev ? `${prev}\n\n${aiRec.suggestedFeedbackSnippet}` : aiRec.suggestedFeedbackSnippet)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-xs hover:shadow transition-all cursor-pointer active:scale-95"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-xs hover:shadow transition-all cursor-pointer active:scale-95"
                           >
                             <Sparkles size={13} />
                             <span>คัดลอกคำแนะนำใส่ใน Feedback</span>
@@ -837,7 +837,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                     {/* Feedback Textarea */}
                     <div className="space-y-2">
                       <label className="font-bold text-xs sm:text-sm text-slate-800 flex items-center gap-1.5">
-                        <MessageSquare size={15} className="text-indigo-600" />
+                        <MessageSquare size={15} className="text-purple-600" />
                         <span>คำแนะนำ (Feedback สำหรับนักเรียน)</span>
                       </label>
                       <p className="text-xs text-slate-500">
@@ -847,16 +847,16 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
                       rows={5}
-                      className="w-full p-4 text-xs sm:text-sm text-slate-800 bg-slate-50/70 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 leading-relaxed placeholder:text-slate-400"
+                      className="w-full p-4 text-xs sm:text-sm text-slate-800 bg-slate-50/70 border border-purple-100/90 rounded-2xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-400/20 focus:border-purple-400 transition-all duration-200 leading-relaxed placeholder:text-slate-400"
                       placeholder="พิมพ์คำแนะนำเพื่อช่วยให้นักเรียนเข้าใจและปรับปรุงได้ตรงจุด..."
                     />
                   </div>
 
                   {/* Decision Action Buttons */}
-                  <div className="flex flex-col sm:flex-row items-center gap-3 pt-3 border-t border-slate-100">
+                  <div className="flex flex-col sm:flex-row items-center gap-3 pt-3 border-t border-purple-50">
                     <button
                       onClick={handleRequestChanges}
-                      className="w-full sm:w-1/2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-amber-900 bg-amber-100 hover:bg-amber-200/90 hover:-translate-y-0.5 active:scale-95 border border-amber-300 transition-all duration-150 shadow-2xs flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+                      className="w-full sm:w-1/2 py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm text-amber-900 bg-amber-100/80 hover:bg-amber-100 hover:-translate-y-0.5 active:scale-95 border border-amber-300/80 transition-all duration-150 shadow-xs flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none"
                     >
                       <RefreshCw size={15} />
                       <span>ส่งกลับให้แก้ไข (ยังไม่คิดคะแนน)</span>
@@ -864,7 +864,7 @@ export const TeacherGrading = ({ missionId, onBack }: { missionId: string, onBac
 
                     <button
                       onClick={handleFinalize}
-                      className="w-full sm:w-1/2 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 transition-all duration-150 shadow-md flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
+                      className="w-full sm:w-1/2 py-3 px-4 rounded-2xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/20 active:scale-95 transition-all duration-150 shadow-xs flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none"
                     >
                       <CheckCircle2 size={16} />
                       <span>ปิดการตรวจและยืนยันคะแนน</span>

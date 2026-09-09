@@ -46,35 +46,35 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
     switch (status) {
       case "not-started":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-100/80 text-slate-600 border border-slate-200/70">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
             ยังไม่เริ่ม
           </span>
         );
       case "started":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            <PlayCircle size={13} className="text-blue-500" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/80">
+            <PlayCircle size={13} className="text-sky-500" />
             กำลังทำ
           </span>
         );
       case "submitted":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/80">
             <Clock size={13} className="text-amber-500 animate-pulse" />
             รอครูตรวจ
           </span>
         );
       case "changes-requested":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 animate-bounce-short">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/80 animate-bounce-short">
             <AlertCircle size={13} className="text-rose-500" />
             มี Feedback ให้แก้ไข
           </span>
         );
       case "reviewed":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
             <CheckCircle2 size={13} className="text-emerald-500" />
             ตรวจจบแล้ว
           </span>
@@ -131,22 +131,22 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Student Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-600 to-violet-700 text-white p-6 sm:p-8 shadow-lg shadow-blue-500/10">
-        <div className="absolute right-0 top-0 -mt-8 -mr-8 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-500/85 via-purple-500/80 to-pink-400/85 text-white p-6 sm:p-8 shadow-sm border border-purple-200/40">
+        <div className="absolute right-0 top-0 -mt-8 -mr-8 w-64 h-64 bg-white/15 rounded-full blur-2xl pointer-events-none"></div>
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur border border-white/20 flex items-center justify-center text-2xl shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl shadow-inner">
               🎓
             </div>
             <div>
-              <div className="flex items-center gap-2 text-blue-200 text-xs font-medium uppercase tracking-wider">
+              <div className="flex items-center gap-2 text-purple-100 text-xs font-semibold uppercase tracking-wider">
                 <GraduationCap size={14} />
                 <span>มุมมองนักเรียน</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-0.5">
                 ยินดีต้อนรับ, {currentStudent?.name || "นักเรียน"}
               </h1>
-              <p className="text-sm text-blue-100/90 mt-1">
+              <p className="text-sm text-purple-100/90 mt-1">
                 ห้องเรียน Python Loops • มุ่งเน้นการแก้ไขงานจนเข้าใจจริง
               </p>
             </div>
@@ -167,22 +167,22 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
         </div>
 
         {/* Quick Stats Grid inside Hero */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/15 text-xs">
-          <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-            <div className="text-blue-200 font-medium">งานทั้งหมด</div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/20 text-xs">
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 shadow-2xs">
+            <div className="text-purple-100 font-medium">งานทั้งหมด</div>
             <div className="text-xl font-bold mt-0.5">{myMissions.length} ชิ้น</div>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-            <div className="text-amber-200 font-medium">รอครูตรวจ</div>
-            <div className="text-xl font-bold mt-0.5 text-amber-300">{countSubmitted} ชิ้น</div>
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 shadow-2xs">
+            <div className="text-amber-100 font-medium">รอครูตรวจ</div>
+            <div className="text-xl font-bold mt-0.5 text-amber-200">{countSubmitted} ชิ้น</div>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-            <div className="text-rose-200 font-medium">รอส่งรอบแก้ไข</div>
-            <div className="text-xl font-bold mt-0.5 text-rose-300">{countChanges} ชิ้น</div>
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 shadow-2xs">
+            <div className="text-rose-100 font-medium">รอส่งรอบแก้ไข</div>
+            <div className="text-xl font-bold mt-0.5 text-rose-200">{countChanges} ชิ้น</div>
           </div>
-          <div className="bg-white/10 backdrop-blur rounded-xl p-3 border border-white/10">
-            <div className="text-emerald-200 font-medium">ตรวจจบแล้ว</div>
-            <div className="text-xl font-bold mt-0.5 text-emerald-300">{countReviewed} ชิ้น</div>
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 shadow-2xs">
+            <div className="text-emerald-100 font-medium">ตรวจจบแล้ว</div>
+            <div className="text-xl font-bold mt-0.5 text-emerald-200">{countReviewed} ชิ้น</div>
           </div>
         </div>
       </div>
@@ -304,19 +304,19 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
 
       {/* Learning Compass - Simulated Rules Insight Banner */}
       {insight && (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-50/90 via-blue-50/70 to-slate-50 border border-blue-200/80 p-5 sm:p-6 shadow-xs">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-50/90 via-pink-50/70 to-indigo-50/80 border border-purple-200/70 p-5 sm:p-6 shadow-xs">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 text-white flex items-center justify-center shrink-0 shadow-sm shadow-purple-200">
               <Compass size={22} className="animate-pulse" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wide text-blue-700 bg-blue-100/80 px-2.5 py-0.5 rounded-full border border-blue-200">
+                <span className="text-xs font-bold uppercase tracking-wide text-purple-700 bg-purple-100/80 px-2.5 py-0.5 rounded-full border border-purple-200">
                   Learning Compass
                 </span>
                 <span className="text-xs text-slate-500">คำแนะนำจากระบบ</span>
               </div>
-              <h3 className="font-bold text-slate-900 text-base mt-2">
+              <h3 className="font-bold text-slate-850 text-base mt-2">
                 {insight.title}
               </h3>
               <p className="text-sm text-slate-600 mt-1 leading-relaxed">
@@ -325,7 +325,7 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
               <div className="mt-4">
                 <button 
                   onClick={() => onOpenMission(insight.missionId)}
-                  className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm hover:shadow-md cursor-pointer"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-xs hover:shadow-md cursor-pointer"
                 >
                   <span>{insight.actionText}</span>
                   <ArrowRight size={14} />
@@ -340,16 +340,16 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BookOpen size={20} className="text-blue-600" />
-            <h2 className="text-lg font-bold text-slate-900">ภารกิจการเรียนรู้ของคุณ</h2>
+            <BookOpen size={20} className="text-purple-600" />
+            <h2 className="text-lg font-bold text-slate-850">ภารกิจการเรียนรู้ของคุณ</h2>
           </div>
           <span className="text-xs text-slate-500">แสดงภารกิจที่ได้รับมอบหมาย</span>
         </div>
 
         <div className="grid gap-4">
           {myMissions.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-xs">
-              <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
+            <div className="bg-white/90 backdrop-blur-md rounded-3xl p-12 text-center border border-purple-100 shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-400 mx-auto flex items-center justify-center mb-3">
                 <BookOpen size={24} />
               </div>
               <p className="text-slate-600 font-medium">ไม่มีภารกิจที่ได้รับมอบหมายในขณะนี้</p>
@@ -362,16 +362,16 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
               return (
                 <div 
                   key={mission.id} 
-                  className="bg-white rounded-2xl border border-slate-200/90 hover:border-blue-400 p-5 sm:p-6 transition-all duration-200 shadow-xs hover:shadow-lg hover:-translate-y-0.5 group flex flex-col md:flex-row md:items-center justify-between gap-5"
+                  className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 hover:border-purple-300 p-5 sm:p-6 transition-all duration-200 shadow-xs hover:shadow-md hover:-translate-y-0.5 group flex flex-col md:flex-row md:items-center justify-between gap-5"
                 >
                   <div className="space-y-2 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-md border ${
+                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
                         mission.type === "short-answer" 
-                          ? "bg-blue-50 text-blue-700 border-blue-200" 
+                          ? "bg-pink-50 text-pink-700 border-pink-200/80" 
                           : mission.type === "coding"
-                          ? "bg-indigo-50 text-indigo-700 border-indigo-200"
-                          : "bg-purple-50 text-purple-700 border-purple-200"
+                          ? "bg-indigo-50 text-indigo-700 border-indigo-200/80"
+                          : "bg-purple-50 text-purple-700 border-purple-200/80"
                       }`}>
                         {mission.type === "short-answer" ? "คำตอบสั้น (Short Answer)" : mission.type === "coding" ? "เขียนโค้ด (Coding)" : "แบบทดสอบ (Quiz)"}
                       </span>

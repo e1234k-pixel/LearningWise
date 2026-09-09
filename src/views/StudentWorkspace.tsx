@@ -137,7 +137,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button 
           onClick={onBack} 
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 hover:-translate-y-0.5 active:scale-95 transition-all shadow-2xs cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white/90 hover:bg-white px-3.5 py-2 rounded-2xl border border-purple-100/70 hover:-translate-y-0.5 active:scale-95 transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none"
         >
           <ArrowLeft size={14} />
           <span>กลับแดชบอร์ด</span>
@@ -151,10 +151,10 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
       </div>
 
       {/* Mission Title Header Card */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs">
+      <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 sm:p-6 shadow-xs">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200/70">
               {mission.type === "short-answer" ? "คำตอบสั้น" : mission.type}
             </span>
             <span className="text-xs font-medium text-slate-500">• {mission.topic}</span>
@@ -163,7 +163,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => openAiDrawer("ช่วยอธิบายโจทย์และแนวทางการคิดแบบฝึกหัดนี้แบบ Socratic ให้หน่อยครับ")}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100/80 px-3 py-1.5 rounded-lg border border-purple-200/80 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50/90 hover:bg-purple-100/90 px-3 py-1.5 rounded-xl border border-purple-200/80 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer shadow-xs"
               title="เปิดผู้ช่วย AI Tutor ประจำวิชา"
             >
               <Bot size={14} className="text-purple-600 animate-pulse" />
@@ -172,7 +172,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
 
             <button
               onClick={() => setShowRubric(!showRubric)}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50/80 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-200/60 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50/80 hover:bg-indigo-100/90 px-3 py-1.5 rounded-xl border border-indigo-200/60 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none"
             >
               <ListChecks size={14} />
               <span>{showRubric ? "ซ่อนเกณฑ์ประเมิน (Rubric)" : "ดูเกณฑ์ประเมิน (Rubric)"}</span>
@@ -189,17 +189,17 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
 
         {/* Rubric Accordion */}
         {showRubric && mission.config.rubric && (
-          <div className="mt-5 p-5 bg-gradient-to-br from-indigo-50/70 to-slate-50 border border-indigo-200/80 rounded-xl space-y-3">
-            <div className="flex items-center gap-2 text-indigo-900 font-bold text-sm">
+          <div className="mt-5 p-5 bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-slate-50/60 border border-purple-100 rounded-2xl space-y-3">
+            <div className="flex items-center gap-2 text-indigo-950 font-bold text-sm">
               <ListChecks size={16} className="text-indigo-600" />
               <span>เกณฑ์การประเมิน (Rubric รวม 6 คะแนน • ผ่านเมื่อได้ 5/6 และเกณฑ์ A ได้เต็ม 2/2)</span>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               {mission.config.rubric.criteria.map((c) => (
-                <div key={c.id} className="bg-white p-3.5 rounded-xl border border-indigo-100 text-xs shadow-2xs space-y-2">
+                <div key={c.id} className="bg-white/95 p-3.5 rounded-2xl border border-purple-100/70 text-xs shadow-2xs space-y-2">
                   <div className="font-bold text-slate-800 flex justify-between items-center">
                     <span>{c.label}</span>
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">เต็ม {c.maxPoints} คะแนน</span>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">เต็ม {c.maxPoints} คะแนน</span>
                   </div>
                   <div className="space-y-1.5 text-slate-600">
                     <div><b className="text-slate-800">2 คะแนน:</b> {c.levels["2"]}</div>
@@ -214,16 +214,16 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
       </div>
 
       {/* 🚀 บันไดความสำเร็จ (Success Ladder Timeline) */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+      <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 sm:p-6 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-purple-50 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
               <Trophy size={18} />
             </div>
             <div>
               <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <span>บันไดความสำเร็จ: วงจรการเรียนรู้สู่ความเข้าใจจริง</span>
-                <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+                <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200/80">
                   Step {isStep4Done ? "4/4" : isStep3Active || isStep3Waiting ? "3/4" : isStep2Waiting ? "2/4" : "1/4"}
                 </span>
               </h2>
@@ -235,16 +235,16 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <span className="text-xs font-medium text-slate-500">ความก้าวหน้า:</span>
-            <span className="text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md">
+            <span className="text-xs font-bold text-purple-900 bg-purple-50/80 border border-purple-100 px-2.5 py-0.5 rounded-full">
               {progressPercent}%
             </span>
           </div>
         </div>
 
         {/* Global Progress Bar Line */}
-        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+        <div className="w-full bg-purple-50 h-2 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 transition-all duration-700 ease-out"
+            className="h-full bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 transition-all duration-700 ease-out rounded-full"
             style={{ width: `${progressPercent}%` }}
           ></div>
         </div>
@@ -252,21 +252,21 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
         {/* 4 Interactive Steps Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
           {/* Step 1: ร่าง & ส่งรอบแรก */}
-          <div className={`p-4 rounded-xl border transition-all duration-200 relative ${
+          <div className={`p-4 rounded-2xl border transition-all duration-200 relative ${
             isStep1Done
-              ? "bg-emerald-50/50 border-emerald-200 text-emerald-950"
+              ? "bg-emerald-50/70 border-emerald-200/80 text-emerald-950"
               : isStep1Active
-              ? "bg-blue-50/80 border-blue-300 ring-2 ring-blue-500/20 shadow-xs text-blue-950"
-              : "bg-slate-50 border-slate-200 text-slate-600"
+              ? "bg-indigo-50/80 border-indigo-200 ring-2 ring-indigo-400/20 shadow-xs text-indigo-950"
+              : "bg-slate-50/70 border-slate-200/70 text-slate-600"
           }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
-                isStep1Done ? "bg-emerald-600 text-white" : isStep1Active ? "bg-blue-600 text-white animate-pulse" : "bg-slate-200 text-slate-600"
+              <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold ${
+                isStep1Done ? "bg-emerald-500 text-white" : isStep1Active ? "bg-indigo-500 text-white animate-pulse" : "bg-slate-200 text-slate-600"
               }`}>
                 {isStep1Done ? <Check size={14} /> : <PenLine size={14} />}
               </span>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                isStep1Done ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-800"
+                isStep1Done ? "bg-emerald-100 text-emerald-800" : "bg-indigo-100 text-indigo-800"
               }`}>
                 {isStep1Done ? "ส่งรอบแรกแล้ว" : "ขั้นตอนปัจจุบัน"}
               </span>
@@ -278,16 +278,16 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
           </div>
 
           {/* Step 2: คำแนะนำจากครู */}
-          <div className={`p-4 rounded-xl border transition-all duration-200 relative ${
+          <div className={`p-4 rounded-2xl border transition-all duration-200 relative ${
             isStep2Done
-              ? "bg-emerald-50/50 border-emerald-200 text-emerald-950"
+              ? "bg-emerald-50/70 border-emerald-200/80 text-emerald-950"
               : isStep2Waiting
-              ? "bg-amber-50/80 border-amber-300 ring-2 ring-amber-500/20 shadow-xs text-amber-950"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-80"
+              ? "bg-amber-50/80 border-amber-200 ring-2 ring-amber-400/20 shadow-xs text-amber-950"
+              : "bg-slate-50/70 border-slate-200/70 text-slate-500 opacity-80"
           }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
-                isStep2Done ? "bg-emerald-600 text-white" : isStep2Waiting ? "bg-amber-500 text-white animate-spin-slow" : "bg-slate-200 text-slate-600"
+              <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold ${
+                isStep2Done ? "bg-emerald-500 text-white" : isStep2Waiting ? "bg-amber-500 text-white animate-spin-slow" : "bg-slate-200 text-slate-600"
               }`}>
                 {isStep2Done ? <Check size={14} /> : <MessageSquareText size={14} />}
               </span>
@@ -308,21 +308,21 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
           </div>
 
           {/* Step 3: ปรับปรุงคำตอบ */}
-          <div className={`p-4 rounded-xl border transition-all duration-200 relative ${
+          <div className={`p-4 rounded-2xl border transition-all duration-200 relative ${
             isStep3Done
-              ? "bg-emerald-50/50 border-emerald-200 text-emerald-950"
+              ? "bg-emerald-50/70 border-emerald-200/80 text-emerald-950"
               : isStep3Active
-              ? "bg-rose-50/80 border-rose-300 ring-2 ring-rose-500/20 shadow-xs text-rose-950 animate-bounce-short"
+              ? "bg-rose-50/80 border-rose-200 ring-2 ring-rose-400/20 shadow-xs text-rose-950 animate-bounce-short"
               : isStep3Waiting
-              ? "bg-amber-50/80 border-amber-300 text-amber-950"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-80"
+              ? "bg-amber-50/80 border-amber-200 text-amber-950"
+              : "bg-slate-50/70 border-slate-200/70 text-slate-500 opacity-80"
           }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
+              <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold ${
                 isStep3Done 
-                  ? "bg-emerald-600 text-white" 
+                  ? "bg-emerald-500 text-white" 
                   : isStep3Active 
-                  ? "bg-rose-600 text-white animate-pulse" 
+                  ? "bg-rose-500 text-white animate-pulse" 
                   : isStep3Waiting
                   ? "bg-amber-500 text-white"
                   : "bg-slate-200 text-slate-600"
@@ -348,14 +348,14 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
           </div>
 
           {/* Step 4: ผ่านเกณฑ์เข้าใจจริง */}
-          <div className={`p-4 rounded-xl border transition-all duration-200 relative ${
+          <div className={`p-4 rounded-2xl border transition-all duration-200 relative ${
             isStep4Done
-              ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-300 ring-2 ring-emerald-500/30 text-emerald-950 shadow-xs"
-              : "bg-slate-50 border-slate-200 text-slate-500 opacity-80"
+              ? "bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 ring-2 ring-emerald-400/30 text-emerald-950 shadow-xs"
+              : "bg-slate-50/70 border-slate-200/70 text-slate-500 opacity-80"
           }`}>
             <div className="flex items-center justify-between mb-2">
-              <span className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
-                isStep4Done ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20 animate-bounce-short" : "bg-slate-200 text-slate-600"
+              <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold ${
+                isStep4Done ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20 animate-bounce-short" : "bg-slate-200 text-slate-600"
               }`}>
                 <Trophy size={14} />
               </span>
@@ -374,8 +374,8 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
 
         {/* Celebration Banner when finalized */}
         {isStep4Done && (
-          <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-blue-500/10 border border-emerald-300 rounded-xl p-4 flex items-center gap-3 animate-fadeIn">
-            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20 text-lg">
+          <div className="bg-gradient-to-r from-emerald-50/80 via-teal-50/60 to-purple-50/60 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3 animate-fadeIn">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20 text-lg">
               🏆
             </div>
             <div>
@@ -392,19 +392,19 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
       </div>
 
       {/* Instructions Card */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 sm:p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-slate-800 font-bold text-sm">
-            <BookOpen size={16} className="text-blue-600" />
+            <BookOpen size={16} className="text-indigo-600" />
             <span>โจทย์และคำชี้แจง</span>
           </div>
           {mission.type === "coding" && (
-            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200/80">
               ครูตรวจด้วยตนเอง • ระบบไม่รันโค้ด
             </span>
           )}
         </div>
-        <div className="bg-slate-900 text-slate-100 p-4 sm:p-5 rounded-xl text-xs sm:text-sm font-mono leading-relaxed whitespace-pre-wrap shadow-inner border border-slate-800">
+        <div className="bg-slate-900/95 text-indigo-50 p-4 sm:p-5 rounded-2xl text-xs sm:text-sm font-mono leading-relaxed whitespace-pre-wrap shadow-inner border border-slate-800/80">
           {mission.instructions}
         </div>
 
@@ -452,7 +452,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
               <button
                 type="button"
                 onClick={() => setIsBeforeAfterOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-400"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white rounded-2xl text-xs font-bold shadow-xs hover:shadow transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-purple-400"
               >
                 <Sparkles size={14} />
                 <span>เปรียบเทียบก่อน–หลัง (Before & After)</span>
@@ -466,9 +466,9 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
               const rev = attemptReviews[attemptReviews.length - 1];
 
               return (
-                <div key={attempt.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+                <div key={attempt.id} className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 overflow-hidden shadow-xs">
                   {/* Round Header */}
-                  <div className="bg-slate-50/80 px-5 py-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                  <div className="bg-purple-50/40 px-5 py-3 border-b border-purple-100/60 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm text-slate-800">รอบการส่งที่ {attempt.attemptNo}</span>
                       <span className="text-xs text-slate-400">•</span>
@@ -491,23 +491,23 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
                   <div className="p-5 space-y-4">
                     <div>
                       <div className="text-xs font-semibold text-slate-500 mb-1">คำตอบที่คุณส่ง:</div>
-                      <div className="p-4 bg-slate-50 rounded-xl text-slate-800 text-sm whitespace-pre-wrap border border-slate-200/60 font-sans">
+                      <div className="p-4 bg-slate-50/80 rounded-2xl text-slate-800 text-sm whitespace-pre-wrap border border-slate-200/60 font-sans">
                         {attempt.content}
                       </div>
                     </div>
 
                     {attempt.revisionNote && (
-                      <div className="p-3.5 bg-blue-50/50 rounded-xl border border-blue-100 text-xs text-slate-700">
-                        <span className="font-bold text-blue-900 block mb-1">💡 บันทึกสิ่งที่ปรับแก้:</span>
+                      <div className="p-3.5 bg-indigo-50/60 rounded-2xl border border-indigo-100/80 text-xs text-slate-700">
+                        <span className="font-bold text-indigo-900 block mb-1">💡 บันทึกสิ่งที่ปรับแก้:</span>
                         {attempt.revisionNote}
                       </div>
                     )}
 
                     {rev && (
-                      <div className={`p-4 rounded-xl border ${
+                      <div className={`p-4 rounded-2xl border ${
                         rev.decision === "finalize"
-                          ? "bg-emerald-50/60 border-emerald-200" 
-                          : "bg-amber-50/70 border-amber-200"
+                          ? "bg-emerald-50/70 border-emerald-200/80" 
+                          : "bg-amber-50/70 border-amber-200/80"
                       }`}>
                         <div className="flex items-center gap-2 font-bold text-xs mb-2">
                           <MessageSquare size={14} className={rev.decision === "finalize" ? "text-emerald-700" : "text-amber-700"} />
@@ -535,7 +535,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
                     )}
 
                     {/* Mission Pulse Interactive Rating */}
-                    <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="pt-3 border-t border-purple-50 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                       <div className="flex items-center gap-1.5 text-xs text-slate-500">
                         <span>💖</span>
                         <span className="font-semibold text-slate-700">สะท้อนความรู้สึกต่องานนี้ (Mission Pulse):</span>
@@ -552,10 +552,10 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
                             key={pulse.label}
                             type="button"
                             onClick={() => recordPulseRating("attempt", attempt.id, pulse.label)}
-                            className={`px-2.5 py-1 rounded-lg font-medium transition-all text-[11px] cursor-pointer ${
+                            className={`px-3 py-1.5 rounded-xl font-medium transition-all text-[11px] cursor-pointer ${
                               attempt.pulseRating === pulse.label
-                                ? "bg-rose-600 text-white font-bold shadow-xs scale-105"
-                                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                                ? "bg-rose-500 text-white font-bold shadow-xs scale-105"
+                                : "bg-purple-50/80 hover:bg-purple-100/80 text-slate-700 border border-purple-100"
                             }`}
                           >
                             {pulse.short}
@@ -573,10 +573,10 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
 
       {/* Editor Area */}
       {!isReadOnly ? (
-        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 p-5 sm:p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`w-2.5 h-2.5 rounded-full ${mission.type === "coding" ? "bg-indigo-600" : "bg-blue-600"}`}></span>
+              <span className={`w-2.5 h-2.5 rounded-full ${mission.type === "coding" ? "bg-purple-500" : "bg-indigo-500"}`}></span>
               <h3 className="font-bold text-base text-slate-900">
                 {status === "changes-requested" 
                   ? `แก้ไข${mission.type === "coding" ? "โค้ด" : "คำตอบ"}รอบที่ ${attempts.length + 1}` 
@@ -595,10 +595,10 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
               onChange={(e) => setContent(e.target.value)}
               rows={mission.type === "coding" ? 14 : 8}
               spellCheck={false}
-              className={`w-full p-4 text-xs sm:text-sm border rounded-xl focus:outline-none transition-all duration-200 leading-relaxed shadow-2xs ${
+              className={`w-full p-4 text-xs sm:text-sm border rounded-2xl focus:outline-none transition-all duration-200 leading-relaxed shadow-2xs ${
                 mission.type === "coding"
-                  ? "bg-slate-950 text-emerald-300 font-mono border-slate-800 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-500"
-                  : "bg-slate-50/70 text-slate-800 font-sans border-slate-300 focus:bg-white focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 placeholder:text-slate-400"
+                  ? "bg-slate-950 text-emerald-300 font-mono border-slate-800 focus:ring-4 focus:ring-purple-400/20 focus:border-purple-400"
+                  : "bg-slate-50/70 text-slate-800 font-sans border-purple-100/90 focus:bg-white focus:ring-4 focus:ring-purple-400/20 focus:border-purple-400 placeholder:text-slate-400"
               }`}
               placeholder={mission.type === "coding" ? "พิมพ์โค้ด Python และเขียนคอมเมนต์ไล่ค่าที่นี่..." : "พิมพ์คำตอบของคุณ โดยตอบให้ครบทั้ง 3 ข้อตามโจทย์..."}
             />
@@ -613,14 +613,14 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
                 value={revisionNote}
                 onChange={(e) => setRevisionNote(e.target.value)}
                 rows={2}
-                className="w-full p-3 text-xs sm:text-sm bg-slate-50/70 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 placeholder:text-slate-400"
+                className="w-full p-3 text-xs sm:text-sm bg-slate-50/70 border border-purple-100/90 rounded-2xl focus:bg-white focus:outline-none focus:ring-4 focus:ring-purple-400/20 focus:border-purple-400 transition-all duration-200 placeholder:text-slate-400"
                 placeholder="อธิบายสั้นๆ ว่าในรอบนี้คุณปรับความเข้าใจหรือคำตอบตรงจุดไหน..."
               />
             </div>
           )}
 
           {/* Action Bar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-purple-50">
             <div className="flex items-center gap-2 text-xs text-slate-500">
               {isSaving ? (
                 <span className="flex items-center gap-1.5 text-amber-600 font-medium">
@@ -643,7 +643,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
                     ? "ช่วยดูโค้ด Python ที่ฉันเขียนตอนนี้ให้หน่อยครับ มีจุดไหนที่ยังไม่ตรงตามโจทย์หรือเงื่อนไข ช่วยให้คำใบ้ทีละระดับครับ"
                     : "ช่วยตรวจทานแนวคิดคำตอบของฉันตามเกณฑ์ Rubric 6 มิติ ให้หน่อยครับ มีส่วนไหนที่ควรปรับปรุงบ้างครับ"
                 )}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100/90 border border-purple-200/80 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none transition-all duration-150 cursor-pointer shadow-2xs"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-semibold text-purple-700 bg-purple-50/90 hover:bg-purple-100 border border-purple-200/80 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none transition-all duration-150 cursor-pointer shadow-xs"
                 title="ขอคำแนะนำและตรวจทานร่างกับ AI Tutor"
               >
                 <Bot size={15} className="text-purple-600" />
@@ -652,7 +652,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
 
               <button 
                 onClick={() => handleSaveDraft(false)}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none transition-all duration-150 cursor-pointer shadow-2xs"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl text-xs font-semibold text-slate-700 bg-slate-100/90 hover:bg-slate-200/90 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none transition-all duration-150 cursor-pointer shadow-xs border border-slate-200/70"
               >
                 <Save size={14} />
                 <span>บันทึกร่าง</span>
@@ -660,7 +660,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
 
               <button 
                 onClick={handleSubmit}
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none transition-all duration-150 cursor-pointer"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/20 active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none transition-all duration-150 cursor-pointer shadow-xs"
               >
                 <Send size={14} />
                 <span>ส่งคำตอบ</span>
@@ -669,7 +669,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
           </div>
         </div>
       ) : (
-        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-6 text-center space-y-2">
+        <div className="bg-white/80 backdrop-blur-md border border-purple-100/70 rounded-3xl p-6 text-center space-y-2 shadow-xs">
           <CheckCircle2 size={28} className="text-emerald-500 mx-auto" />
           <h3 className="font-bold text-slate-800 text-sm">
             {status === "submitted" ? "คุณส่งคำตอบรอบนี้เรียบร้อยแล้ว" : "งานนี้ได้รับการตรวจปิดเรียบร้อยแล้ว"}

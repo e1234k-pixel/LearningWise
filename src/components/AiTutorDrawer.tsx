@@ -207,7 +207,7 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({ activeMissionId })
       {!isAiDrawerOpen && (
         <button
           onClick={() => openAiDrawer()}
-          className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl shadow-blue-500/30 border-2 border-white/60 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer group"
+          className="fixed bottom-5 right-5 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-indigo-500/90 via-purple-500/90 to-pink-400/90 hover:from-indigo-600 hover:to-pink-500 text-white shadow-lg shadow-purple-200/60 border-2 border-white/70 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer group"
           title="เปิดห้องแชท AI Tutor ผู้ช่วยเรียนรู้"
         >
           <div className="relative">
@@ -217,9 +217,9 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({ activeMissionId })
           <div className="text-left hidden sm:block">
             <div className="text-xs font-bold leading-none flex items-center gap-1">
               <span>AI Tutor</span>
-              <Sparkles size={12} className="text-amber-300" />
+              <Sparkles size={12} className="text-amber-200" />
             </div>
-            <div className="text-[10px] text-blue-100 font-medium leading-tight">
+            <div className="text-[10px] text-purple-100 font-medium leading-tight">
               {aiTutorConfig.apiKey ? "Gemini 2.5 Flash" : "ครูผู้ช่วยจำลอง"}
             </div>
           </div>
@@ -230,22 +230,22 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({ activeMissionId })
       {isAiDrawerOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-end sm:pr-6 pointer-events-none animate-in fade-in duration-200">
           <div 
-            className="w-full sm:w-[460px] h-[85vh] sm:h-[650px] max-h-[92vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 pointer-events-auto flex flex-col overflow-hidden text-slate-800 transition-all duration-200"
+            className="w-full sm:w-[460px] h-[85vh] sm:h-[650px] max-h-[92vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-xl border border-purple-100/80 pointer-events-auto flex flex-col overflow-hidden text-slate-800 transition-all duration-200"
           >
             {/* Drawer Top Header */}
-            <div className="px-4 py-3 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
+            <div className="px-4 py-3 bg-gradient-to-r from-indigo-900/90 via-purple-950/90 to-slate-900/90 text-white flex items-center justify-between border-b border-purple-300/20 shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-white shadow-xs">
+                <div className="w-8 h-8 rounded-2xl bg-gradient-to-tr from-indigo-400 to-pink-400 flex items-center justify-center text-white shadow-xs">
                   <Bot size={18} />
                 </div>
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="font-bold text-xs">LearnWise AI Tutor</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/40">
                       LIVE
                     </span>
                   </div>
-                  <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                  <div className="text-[10px] text-purple-200/80 font-mono flex items-center gap-1">
                     <span>{aiTutorConfig.apiKey ? (aiTutorConfig.model || "gemini-2.5-flash") : "Socratic Mode (Offline)"}</span>
                     <span>•</span>
                     <span className="capitalize">{aiTutorConfig.teachingStyle}</span>
@@ -298,12 +298,12 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({ activeMissionId })
             )}
 
             {/* Quick Prompt Starters */}
-            <div className="px-3 py-2 bg-slate-50/90 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 no-scrollbar">
+            <div className="px-3 py-2 bg-purple-50/40 border-b border-purple-100/60 flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 no-scrollbar">
               <button
                 type="button"
                 onClick={() => handleSendMessage("ช่วยอธิบายโจทย์และแนวคิดของงานนี้ให้เข้าใจง่ายๆ หน่อยครับ")}
                 disabled={isLoading}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200 whitespace-nowrap cursor-pointer transition-colors shadow-2xs active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-purple-100/90 whitespace-nowrap cursor-pointer transition-colors shadow-2xs active:scale-95 disabled:opacity-50"
               >
                 <Lightbulb size={12} className="text-amber-500" />
                 <span>อธิบายโจทย์</span>
@@ -312,7 +312,7 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({ activeMissionId })
                 type="button"
                 onClick={() => handleSendMessage("ช่วยดูโค้ดที่ฉันเขียนอยู่หน่อยว่ามีจุดติดขัดตรงไหน (ขอคำใบ้ อย่าเพิ่งเฉลยนะ)")}
                 disabled={isLoading}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200 whitespace-nowrap cursor-pointer transition-colors shadow-2xs active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-purple-100/90 whitespace-nowrap cursor-pointer transition-colors shadow-2xs active:scale-95 disabled:opacity-50"
               >
                 <Bug size={12} className="text-rose-500" />
                 <span>ขอคำใบ้โค้ด</span>
@@ -321,7 +321,7 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({ activeMissionId })
                 type="button"
                 onClick={() => handleSendMessage("ช่วยตรวจทานตามเกณฑ์รูบริกว่าผลงานของฉันครบถ้วนหรือยัง")}
                 disabled={isLoading}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200 whitespace-nowrap cursor-pointer transition-colors shadow-2xs active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-purple-100/90 whitespace-nowrap cursor-pointer transition-colors shadow-2xs active:scale-95 disabled:opacity-50"
               >
                 <Check size={12} className="text-emerald-500" />
                 <span>ตรวจตามรูบริก</span>
@@ -330,7 +330,7 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({ activeMissionId })
                 type="button"
                 onClick={() => handleSendMessage("ช่วยยกตัวอย่างกรณีทดสอบ (Test Case) เพิ่มเติมให้หน่อย")}
                 disabled={isLoading}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-600 border border-slate-200 whitespace-nowrap cursor-pointer transition-colors shadow-2xs active:scale-95 disabled:opacity-50"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-purple-100/90 whitespace-nowrap cursor-pointer transition-colors shadow-2xs active:scale-95 disabled:opacity-50"
               >
                 <Code size={12} className="text-purple-500" />
                 <span>ตัวอย่าง Test Case</span>
@@ -338,14 +338,14 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({ activeMissionId })
             </div>
 
             {/* Message Chat Scroll Area */}
-            <div className="flex-1 p-3.5 overflow-y-auto space-y-3 text-xs bg-slate-50/50">
+            <div className="flex-1 p-3.5 overflow-y-auto space-y-3 text-xs bg-purple-50/20">
               {messages.map((msg) => (
                 <div
                   key={msg.id}
                   className={`flex gap-2.5 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {msg.sender === "assistant" && (
-                    <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shrink-0 shadow-xs mt-0.5">
+                    <div className="w-7 h-7 rounded-2xl bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white shrink-0 shadow-xs mt-0.5">
                       <Bot size={15} />
                     </div>
                   )}
@@ -353,10 +353,10 @@ export const AiTutorDrawer: React.FC<AiTutorDrawerProps> = ({ activeMissionId })
                   <div
                     className={`max-w-[85%] rounded-2xl p-3 shadow-xs ${
                       msg.sender === "user"
-                        ? "bg-blue-600 text-white rounded-tr-xs"
+                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-tr-xs"
                         : msg.isError
                         ? "bg-rose-50 border border-rose-200 text-rose-800 rounded-tl-xs"
-                        : "bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs"
+                        : "bg-white border border-purple-100 text-slate-800 rounded-tl-xs"
                     }`}
                   >
                     <div className="leading-relaxed font-sans break-words">

@@ -36,7 +36,7 @@ export function AppContent() {
   const activeMission = envelope.missions.find(m => m.id === selectedMissionId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col bg-transparent text-slate-700 selection:bg-purple-200">
       <RoleSelector />
       <GoogleSignInModal />
       <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-8">

@@ -311,67 +311,67 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Teacher Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white p-6 sm:p-8 shadow-lg shadow-indigo-950/20">
-        <div className="absolute right-0 top-0 -mt-10 -mr-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-sky-500/85 via-indigo-500/80 to-purple-500/85 text-white p-6 sm:p-8 shadow-sm border border-indigo-200/40">
+        <div className="absolute right-0 top-0 -mt-10 -mr-10 w-72 h-72 bg-white/15 rounded-full blur-3xl pointer-events-none"></div>
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-2xl shadow-inner">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl shadow-inner">
               👩‍🏫
             </div>
             <div>
-              <div className="flex items-center gap-2 text-indigo-300 text-xs font-medium uppercase tracking-wider">
+              <div className="flex items-center gap-2 text-indigo-100 text-xs font-semibold uppercase tracking-wider">
                 <School size={14} />
                 <span>แดชบอร์ดครูผู้สอน • ห้องวิทยาการคำนวณ</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-0.5">
                 ยินดีต้อนรับ, ครูเมย์
               </h1>
-              <p className="text-sm text-slate-300 mt-1">
+              <p className="text-sm text-indigo-100/90 mt-1">
                 ติดตามการส่งงาน ตรวจให้คำแนะนำรายบุคคล และปิดการประเมิน
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="bg-white/10 backdrop-blur px-4 py-2.5 rounded-xl border border-white/15 text-center">
-              <span className="text-[11px] text-slate-300 block">นักเรียนในห้อง</span>
+            <div className="bg-white/15 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/20 text-center shadow-2xs">
+              <span className="text-[11px] text-indigo-100 block">นักเรียนในห้อง</span>
               <span className="text-lg font-bold text-white">{envelope.students.length} คน</span>
             </div>
-            <div className="bg-white/10 backdrop-blur px-4 py-2.5 rounded-xl border border-white/15 text-center">
-              <span className="text-[11px] text-slate-300 block">ภารกิจที่เปิดอยู่</span>
+            <div className="bg-white/15 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/20 text-center shadow-2xs">
+              <span className="text-[11px] text-indigo-100 block">ภารกิจที่เปิดอยู่</span>
               <span className="text-lg font-bold text-white">{envelope.missions.length} งาน</span>
             </div>
           </div>
         </div>
 
         {/* Global Stats Overview */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/15 text-xs">
-          <div className="bg-amber-500/15 backdrop-blur rounded-xl p-3.5 border border-amber-500/20">
-            <div className="flex items-center gap-1.5 text-amber-300 font-semibold">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/20 text-xs">
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 shadow-2xs">
+            <div className="flex items-center gap-1.5 text-amber-100 font-semibold">
               <Clock size={14} />
               <span>รอตรวจในคิว</span>
             </div>
             <div className="text-2xl font-black mt-1 text-white">{totalSubmitted} <span className="text-xs font-normal text-amber-200">ชิ้น</span></div>
           </div>
 
-          <div className="bg-rose-500/15 backdrop-blur rounded-xl p-3.5 border border-rose-500/20">
-            <div className="flex items-center gap-1.5 text-rose-300 font-semibold">
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 shadow-2xs">
+            <div className="flex items-center gap-1.5 text-rose-100 font-semibold">
               <AlertCircle size={14} />
               <span>ส่งกลับให้แก้ไข</span>
             </div>
             <div className="text-2xl font-black mt-1 text-white">{totalChanges} <span className="text-xs font-normal text-rose-200">ชิ้น</span></div>
           </div>
 
-          <div className="bg-emerald-500/15 backdrop-blur rounded-xl p-3.5 border border-emerald-500/20">
-            <div className="flex items-center gap-1.5 text-emerald-300 font-semibold">
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 shadow-2xs">
+            <div className="flex items-center gap-1.5 text-emerald-100 font-semibold">
               <CheckCircle2 size={14} />
               <span>ตรวจจบแล้ว</span>
             </div>
             <div className="text-2xl font-black mt-1 text-white">{totalReviewed} <span className="text-xs font-normal text-emerald-200">ชิ้น</span></div>
           </div>
 
-          <div className="bg-blue-500/15 backdrop-blur rounded-xl p-3.5 border border-blue-500/20">
-            <div className="flex items-center gap-1.5 text-blue-300 font-semibold">
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-3.5 border border-white/20 shadow-2xs">
+            <div className="flex items-center gap-1.5 text-sky-100 font-semibold">
               <Layers size={14} />
               <span>อัตราตรวจจบ</span>
             </div>
@@ -396,16 +396,16 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
       />
 
       {/* 🧭 Teacher Learning Compass (ระบบวิเคราะห์เชิงรุกเพื่อการสอน) */}
-      <div className="bg-white rounded-2xl border border-indigo-200 shadow-sm overflow-hidden">
-        <div className="bg-gradient-to-r from-indigo-50 via-blue-50 to-slate-50 px-5 sm:px-6 py-4 border-b border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-purple-100/70 shadow-xs overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-50/80 via-pink-50/60 to-indigo-50/70 px-5 sm:px-6 py-4 border-b border-purple-100/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 text-white flex items-center justify-center shadow-xs">
               <Compass size={18} />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <span>Teacher Learning Compass</span>
-                <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">
+                <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
                   ระบบแนะแนวการสอนเชิงรุก
                 </span>
               </h2>
@@ -415,7 +415,7 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
             </div>
           </div>
 
-          <div className="text-xs text-indigo-700 font-semibold flex items-center gap-1 self-end sm:self-auto">
+          <div className="text-xs text-purple-700 font-semibold flex items-center gap-1 self-end sm:self-auto">
             <TrendingUp size={14} />
             <span>พร้อมให้ข้อเสนอแนะ {pendingReviewsList.length + needsQuizPracticeList.length} รายการ</span>
           </div>
