@@ -477,3 +477,56 @@ export async function pushAuditLogToCloud(log: AuditLogEntry): Promise<void> {
     console.warn("Cloud push audit log error:", err);
   }
 }
+
+/**
+ * บันทึกหรืออัปเดตข้อมูลผู้ใช้งาน (Profile) ขึ้น Supabase Cloud แบบ Real-time
+ */
+export async function pushUserToCloud(user: AuthUser, learnerProfile?: any): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client) return false;
+
+  try {
+    const { error } = await client.from("profiles").upsert({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatar_url: user.avatarUrl || null,
+      role: user.role,
+      department: user.department || null,
+      school_id: user.schoolId || null,
+      status: user.status || "active",
+      learner_profile: learnerProfile || null,
+      last_login_at: user.lastLoginAt || new Date().toISOString(),
+    }, { onConflict: "id" });
+
+    if (error) {
+      console.warn("Cloud push user error:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Error in pushUserToCloud:", err);
+    return false;
+  }
+}
+
+/**
+ * ลบข้อมูลผู้ใช้งาน (Profile) ออกจาก Supabase Cloud
+ */
+export async function deleteUserFromCloud(userId: string): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client) return false;
+
+  try {
+    const { error } = await client.from("profiles").delete().eq("id", userId);
+    if (error) {
+      console.warn("Cloud delete user error:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Error in deleteUserFromCloud:", err);
+    return false;
+  }
+}
+

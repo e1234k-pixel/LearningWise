@@ -12,7 +12,8 @@ import type {
   AuthUser,
   GoogleWorkspaceConfig,
   AuditLogEntry,
-  RoleType
+  RoleType,
+  Student
 } from "../types";
 import { 
   initialEnvelope, 
@@ -26,7 +27,8 @@ import {
 import { 
   getStoredSupabaseConfig, 
   saveSupabaseConfig, 
-  testSupabaseConnection 
+  testSupabaseConnection,
+  getSupabaseClient
 } from "../lib/supabase";
 import {
   seedAllToSupabase,
@@ -35,6 +37,8 @@ import {
   pushReviewToCloud,
   pushQuizHistoryToCloud,
   pushAuditLogToCloud,
+  pushUserToCloud,
+  deleteUserFromCloud,
   type CloudSyncResult
 } from "../services/supabaseService";
 
@@ -53,6 +57,7 @@ interface AppContextType {
   updateUserRole: (userId: string, newRole: RoleType) => void;
   toggleUserStatus: (userId: string) => void;
   addUser: (newUser: Omit<AuthUser, "id" | "lastLoginAt">) => void;
+  deleteUser: (userId: string) => Promise<void>;
   updateGoogleConfig: (config: Partial<GoogleWorkspaceConfig>) => void;
   logAudit: (action: string, category: "auth" | "academic" | "security" | "system", details: string) => void;
   envelope: Envelope;
@@ -105,7 +110,31 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (conf.isConfigured) {
       testSupabaseConnection(conf.url, conf.anonKey)
         .then(res => {
-          setSupabaseStatus(res.success ? "connected" : "error");
+          const isConn = res.success;
+          setSupabaseStatus(isConn ? "connected" : "error");
+          if (isConn) {
+            // Auto-fetch fresh data from Supabase Cloud on startup
+            fetchFromSupabase().then(cloudData => {
+              if (cloudData?.users && cloudData.users.length > 0) {
+                setUsers(cloudData.users);
+                localStorage.setItem(USERS_KEY, JSON.stringify(cloudData.users));
+              }
+              if (cloudData?.envelope) {
+                setEnvelope(prev => {
+                  const merged: Envelope = {
+                    ...prev,
+                    ...(cloudData.envelope?.missions ? { missions: cloudData.envelope.missions } : {}),
+                    ...(cloudData.envelope?.attempts ? { attempts: cloudData.envelope.attempts } : {}),
+                    ...(cloudData.envelope?.reviews ? { reviews: cloudData.envelope.reviews } : {}),
+                    ...(cloudData.envelope?.quizHistory ? { quizHistory: cloudData.envelope.quizHistory } : {}),
+                    ...(cloudData.envelope?.students ? { students: cloudData.envelope.students } : {}),
+                  };
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                  return merged;
+                });
+              }
+            }).catch(e => console.warn("Auto-fetch error on startup:", e));
+          }
         })
         .catch(() => {
           setSupabaseStatus("error");
@@ -114,6 +143,41 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setSupabaseStatus("disconnected");
     }
   }, []);
+
+  // Supabase Realtime Listener for Profiles
+  useEffect(() => {
+    if (supabaseStatus !== "connected") return;
+    const client = getSupabaseClient();
+    if (!client) return;
+
+    const channel = client
+      .channel("realtime-profiles-sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        () => {
+          // Whenever any profile is added, updated, or deleted on Supabase
+          fetchFromSupabase().then(cloudData => {
+            if (cloudData?.users && cloudData.users.length > 0) {
+              setUsers(cloudData.users);
+              localStorage.setItem(USERS_KEY, JSON.stringify(cloudData.users));
+            }
+            if (cloudData?.envelope?.students) {
+              setEnvelope(prev => {
+                const nextEnv = { ...prev, students: cloudData.envelope!.students! };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
+                return nextEnv;
+              });
+            }
+          }).catch(e => console.warn("Realtime sync error:", e));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      client.removeChannel(channel);
+    };
+  }, [supabaseStatus]);
 
   useEffect(() => {
     // Load Users
@@ -286,12 +350,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const updatedUsers = [...users, targetUser];
       setUsers(updatedUsers);
       localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+
+      // Push newly provisioned user to Supabase Cloud
+      pushUserToCloud(targetUser).catch(err => console.warn("Cloud push user error:", err));
     } else {
       // Update last login
       targetUser = { ...targetUser, lastLoginAt: new Date().toISOString() };
       const updatedUsers = users.map(u => u.id === targetUser!.id ? targetUser! : u);
       setUsers(updatedUsers);
       localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+
+      // Update last login in Supabase Cloud
+      pushUserToCloud(targetUser).catch(err => console.warn("Cloud update login error:", err));
     }
 
     if (targetUser.status === "suspended") {
@@ -328,9 +398,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateUserRole = (userId: string, newRole: RoleType) => {
+    let updatedUserObj: AuthUser | null = null;
     const updatedUsers = users.map(u => {
       if (u.id === userId) {
-        return { ...u, role: newRole };
+        updatedUserObj = { ...u, role: newRole };
+        return updatedUserObj;
       }
       return u;
     });
@@ -343,20 +415,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setRoleState({ type: newRole, id: userId });
     }
 
-    logAudit("Update User Role", "security", `ปรับเปลี่ยนสิทธิ์ผู้ใช้ ${userId} เป็น ${newRole.toUpperCase()}`);
+    if (updatedUserObj) {
+      pushUserToCloud(updatedUserObj).catch(err => console.warn("Cloud update role error:", err));
+    }
+
+    logAudit("Update User Role", "security", `ปรับเปลี่ยนสิทธิ์ผู้ใช้ ${userId} เป็น ${newRole.toUpperCase()} [ซิงก์ Cloud]`);
   };
 
   const toggleUserStatus = (userId: string) => {
+    let updatedUserObj: AuthUser | null = null;
     const updatedUsers = users.map(u => {
       if (u.id === userId) {
         const newStatus = u.status === "active" ? ("suspended" as const) : ("active" as const);
-        logAudit("Toggle Account Status", "security", `เปลี่ยนสถานะบัญชี ${u.email} เป็น ${newStatus}`);
-        return { ...u, status: newStatus };
+        updatedUserObj = { ...u, status: newStatus };
+        logAudit("Toggle Account Status", "security", `เปลี่ยนสถานะบัญชี ${u.email} เป็น ${newStatus} [ซิงก์ Cloud]`);
+        return updatedUserObj;
       }
       return u;
     });
     setUsers(updatedUsers);
     localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+
+    if (updatedUserObj) {
+      pushUserToCloud(updatedUserObj).catch(err => console.warn("Cloud update status error:", err));
+    }
   };
 
   const addUser = (newUser: Omit<AuthUser, "id" | "lastLoginAt">) => {
@@ -368,7 +450,55 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const updated = [...users, created];
     setUsers(updated);
     localStorage.setItem(USERS_KEY, JSON.stringify(updated));
-    logAudit("Provision New User", "security", `สร้างผู้ใช้ใหม่: ${created.email} (${created.role})`);
+
+    // If role is student, also sync into envelope.students
+    if (created.role === "student") {
+      const newStudent: Student = {
+        id: created.id,
+        name: created.name,
+        learnerProfile: undefined
+      };
+      setEnvelope(prev => {
+        const nextStudents = [...prev.students.filter(s => s.id !== created.id), newStudent];
+        const nextEnv = { ...prev, students: nextStudents };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
+        return nextEnv;
+      });
+    }
+
+    // PUSH TO SUPABASE CLOUD IMMEDIATELY
+    pushUserToCloud(created).catch(err => {
+      console.warn("Failed to push new user to Supabase:", err);
+    });
+
+    logAudit("Provision New User", "security", `สร้างผู้ใช้ใหม่: ${created.email} (${created.role}) [ซิงก์ Cloud สำเร็จ]`);
+  };
+
+  const deleteUser = async (userId: string) => {
+    const target = users.find(u => u.id === userId);
+    if (!target) return;
+
+    const updated = users.filter(u => u.id !== userId);
+    setUsers(updated);
+    localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+
+    if (target.role === "student") {
+      setEnvelope(prev => {
+        const nextEnv = {
+          ...prev,
+          students: prev.students.filter(s => s.id !== userId)
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
+        return nextEnv;
+      });
+    }
+
+    // DELETE FROM SUPABASE CLOUD IMMEDIATELY
+    deleteUserFromCloud(userId).catch(err => {
+      console.warn("Failed to delete user from Supabase:", err);
+    });
+
+    logAudit("Delete User", "security", `ลบผู้ใช้งาน: ${target.email} (${target.role}) [ลบจาก Cloud สำเร็จ]`);
   };
 
   const updateGoogleConfig = (newConfig: Partial<GoogleWorkspaceConfig>) => {
@@ -671,15 +801,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem(USERS_KEY, JSON.stringify(data.users));
     }
     if (data.envelope) {
-      const merged: Envelope = {
-        ...envelope,
-        ...(data.envelope.missions ? { missions: data.envelope.missions } : {}),
-        ...(data.envelope.attempts ? { attempts: data.envelope.attempts } : {}),
-        ...(data.envelope.reviews ? { reviews: data.envelope.reviews } : {}),
-        ...(data.envelope.quizHistory ? { quizHistory: data.envelope.quizHistory } : {}),
-        ...(data.envelope.students ? { students: data.envelope.students } : {}),
-      };
-      updateEnvelope(merged);
+      setEnvelope(prev => {
+        const merged: Envelope = {
+          ...prev,
+          ...(data.envelope?.missions ? { missions: data.envelope.missions } : {}),
+          ...(data.envelope?.attempts ? { attempts: data.envelope.attempts } : {}),
+          ...(data.envelope?.reviews ? { reviews: data.envelope.reviews } : {}),
+          ...(data.envelope?.quizHistory ? { quizHistory: data.envelope.quizHistory } : {}),
+          ...(data.envelope?.students ? { students: data.envelope.students } : {}),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        return merged;
+      });
     }
     if (data.auditLogs && data.auditLogs.length > 0) {
       setAuditLogs(data.auditLogs);
@@ -704,6 +837,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       updateUserRole,
       toggleUserStatus,
       addUser,
+      deleteUser,
       updateGoogleConfig,
       logAudit,
       envelope, 

@@ -21,7 +21,8 @@ import {
   Copy,
   Check,
   Zap,
-  ArrowUpRight
+  ArrowUpRight,
+  Trash2
 } from "lucide-react";
 import { LamborghiniArcGauge } from "../components/cockpit/LamborghiniGauge";
 import type { RoleType, AuditLogEntry } from "../types";
@@ -194,10 +195,12 @@ export const AdminDashboard: React.FC = () => {
     updateSupabaseCredentials,
     testCloudConnection,
     seedToCloud,
-    fetchCloudData
+    fetchCloudData,
+    deleteUser
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<"users" | "google" | "audit" | "classes" | "supabase">("users");
+  const [isRefreshingUsers, setIsRefreshingUsers] = useState(false);
 
   // Supabase Configuration Form States
   const [supabaseUrlInput, setSupabaseUrlInput] = useState(supabaseConfig.url || "");
@@ -520,7 +523,7 @@ export const AdminDashboard: React.FC = () => {
             </div>
 
             {/* Filters & Actions */}
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end flex-wrap">
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
@@ -531,6 +534,22 @@ export const AdminDashboard: React.FC = () => {
                 <option value="teacher">👩‍🏫 ครูผู้สอน (Teacher)</option>
                 <option value="student">🎓 นักเรียน (Student)</option>
               </select>
+
+              {/* Cloud Sync Button */}
+              <button
+                onClick={async () => {
+                  setIsRefreshingUsers(true);
+                  const res = await fetchCloudData();
+                  setIsRefreshingUsers(false);
+                  alert(res.message);
+                }}
+                disabled={isRefreshingUsers}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold border border-emerald-200 cursor-pointer transition-all disabled:opacity-50"
+                title="ดึงข้อมูลผู้ใช้ล่าสุดจาก Supabase Cloud แบบสด"
+              >
+                <RefreshCw size={13} className={isRefreshingUsers ? "animate-spin" : ""} />
+                <span>ซิงก์ Cloud ({users.length} คน)</span>
+              </button>
 
               <button
                 onClick={() => setIsAddUserOpen(true)}
@@ -634,6 +653,19 @@ export const AdminDashboard: React.FC = () => {
                             title={u.status === "active" ? "ระงับการใช้งาน" : "เปิดใช้งานบัญชี"}
                           >
                             {u.status === "active" ? <Lock size={13} /> : <Unlock size={13} />}
+                          </button>
+
+                          {/* Delete User from System & Cloud */}
+                          <button
+                            onClick={async () => {
+                              if (window.confirm(`ต้องการลบผู้ใช้งาน "${u.name}" (${u.email}) ออกจากระบบและ Supabase Cloud หรือไม่?`)) {
+                                await deleteUser(u.id);
+                              }
+                            }}
+                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="ลบผู้ใช้งานออกจากระบบและ Supabase Cloud"
+                          >
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </td>
