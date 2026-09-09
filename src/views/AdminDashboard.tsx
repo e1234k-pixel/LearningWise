@@ -196,11 +196,15 @@ export const AdminDashboard: React.FC = () => {
     testCloudConnection,
     seedToCloud,
     fetchCloudData,
-    deleteUser
+    deleteUser,
+    googleCallbackUrl,
+    openGoogleModal
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<"users" | "google" | "audit" | "classes" | "supabase">("users");
   const [isRefreshingUsers, setIsRefreshingUsers] = useState(false);
+  const [isCallbackCopied, setIsCallbackCopied] = useState(false);
+  const [clientIdInput, setClientIdInput] = useState(googleConfig.clientId || "");
 
   // Supabase Configuration Form States
   const [supabaseUrlInput, setSupabaseUrlInput] = useState(supabaseConfig.url || "");
@@ -788,6 +792,98 @@ export const AdminDashboard: React.FC = () => {
                   <option value="teacher">👩‍🏫 ครูผู้สอน (Teacher)</option>
                 </select>
               </div>
+            </div>
+          </div>
+
+          {/* Card 3: Google Cloud OAuth 2.0 & Supabase Auth Integration */}
+          <div className="md:col-span-2 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                  <Globe size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">การเชื่อมต่อ Google Cloud OAuth 2.0 &amp; Supabase Authentication</h3>
+                  <p className="text-xs text-slate-500">ตั้งค่าการเชื่อมต่อเพื่อให้นักเรียนและครูสามารถล็อกอินผ่าน Google Account จริงได้ทั่วโลก</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={openGoogleModal}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold border border-blue-200 transition-all cursor-pointer"
+              >
+                <span>ทดสอบเปิดหน้าต่าง Google Sign-In</span>
+                <ArrowUpRight size={14} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              {/* Left Column: Authorized Redirect Callback URL */}
+              <div className="space-y-2 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">Authorized Redirect URI (Callback URL)</span>
+                  <span className="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">Google Cloud</span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  คัดลอก URL นี้ไปใส่ในช่อง <strong>"Authorized redirect URIs"</strong> ของ Google Cloud Console (OAuth Client ID):
+                </p>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-white border border-slate-200 font-mono text-xs text-slate-700">
+                  <span className="flex-1 truncate">{googleCallbackUrl || "https://yfhudjpsngzegdxaiiwk.supabase.co/auth/v1/callback"}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(googleCallbackUrl || "https://yfhudjpsngzegdxaiiwk.supabase.co/auth/v1/callback");
+                      setIsCallbackCopied(true);
+                      setTimeout(() => setIsCallbackCopied(false), 2500);
+                    }}
+                    className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-sans text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    {isCallbackCopied ? <Check size={12} /> : <Copy size={12} />}
+                    <span>{isCallbackCopied ? "คัดลอกแล้ว" : "คัดลอก"}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column: Google Client ID Configuration */}
+              <div className="space-y-2 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-xs font-bold text-slate-800">Google OAuth 2.0 Web Client ID</span>
+                <p className="text-[11px] text-slate-500">
+                  รหัส Client ID ที่ได้จาก Google Cloud Platform (ลงท้ายด้วย .apps.googleusercontent.com):
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    placeholder="เช่น 123456789-abcdef.apps.googleusercontent.com"
+                    value={clientIdInput}
+                    onChange={(e) => setClientIdInput(e.target.value)}
+                    className="flex-1 px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateGoogleConfig({ clientId: clientIdInput.trim() });
+                      alert("บันทึก Google OAuth Client ID เรียบร้อยแล้ว");
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold cursor-pointer"
+                  >
+                    บันทึก
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Step-by-step instructions */}
+            <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-200/70 text-xs space-y-2">
+              <span className="font-bold text-blue-900 flex items-center gap-1.5">
+                <ShieldCheck size={15} className="text-blue-600" />
+                <span>3 ขั้นตอนการเปิดใช้งาน Google Authentication ให้กับโรงเรียน:</span>
+              </span>
+              <ol className="list-decimal list-inside space-y-1 text-slate-700 text-[11px]">
+                <li>เข้าสู่ <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-blue-600 underline font-semibold">Google Cloud Console</a> &gt; สร้าง <strong>OAuth 2.0 Client ID</strong> (เลือกชนิด Web Application) และวาง Callback URL ด้านบน</li>
+                <li>ไปที่ <a href="https://supabase.com/dashboard/project/yfhudjpsngzegdxaiiwk/auth/providers" target="_blank" rel="noreferrer" className="text-blue-600 underline font-semibold">Supabase Dashboard &gt; Auth &gt; Providers &gt; Google</a> แล้วเปิดใช้งาน (Enabled) พร้อมใส่ Client ID และ Client Secret</li>
+                <li>เมื่อตั้งค่าเสร็จสิ้น นักเรียนและครูทุกคนจะสามารถกดปุ่ม <strong>"ลงชื่อเข้าใช้ด้วยบัญชี Google ของท่าน"</strong> เพื่อเข้าใช้งานระบบได้ทันที!</li>
+              </ol>
             </div>
           </div>
         </div>

@@ -206,6 +206,8 @@ export interface GoogleWorkspaceConfig {
   schoolName: string;
   academicYear: string;
   currentTerm: string;
+  clientId?: string;
+  redirectUri?: string;
 }
 
 export interface AuditLogEntry {

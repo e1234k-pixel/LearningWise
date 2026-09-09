@@ -28,7 +28,10 @@ import {
   getStoredSupabaseConfig, 
   saveSupabaseConfig, 
   testSupabaseConnection,
-  getSupabaseClient
+  getSupabaseClient,
+  signInWithGoogleOAuth as supabaseSignInWithGoogleOAuth,
+  signOutFromSupabase,
+  getGoogleCallbackUrl
 } from "../lib/supabase";
 import {
   seedAllToSupabase,
@@ -53,6 +56,10 @@ interface AppContextType {
   openGoogleModal: () => void;
   closeGoogleModal: () => void;
   loginWithGoogle: (account: AuthUser | { email: string; name: string; avatarUrl?: string }) => void;
+  signInWithGoogleOAuth: () => Promise<{ success: boolean; message?: string }>;
+  googleOAuthError: string | null;
+  clearGoogleOAuthError: () => void;
+  googleCallbackUrl: string;
   logout: () => void;
   updateUserRole: (userId: string, newRole: RoleType) => void;
   toggleUserStatus: (userId: string) => void;
@@ -99,6 +106,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [googleConfig, setGoogleConfig] = useState<GoogleWorkspaceConfig>(initialGoogleConfig);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(initialAuditLogs);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [googleOAuthError, setGoogleOAuthError] = useState<string | null>(null);
+  const clearGoogleOAuthError = () => setGoogleOAuthError(null);
+  const [googleCallbackUrl] = useState<string>(getGoogleCallbackUrl());
+
+  // Detect OAuth error in URL on mount
+  useEffect(() => {
+    try {
+      const hash = window.location.hash || "";
+      const search = window.location.search || "";
+      const hashParams = new URLSearchParams(hash.startsWith("#") ? hash.substring(1) : "");
+      const searchParams = new URLSearchParams(search.startsWith("?") ? search.substring(1) : "");
+
+      const errorMsg = 
+        hashParams.get("error_description") || 
+        hashParams.get("error") || 
+        searchParams.get("error_description") || 
+        searchParams.get("error");
+
+      if (errorMsg) {
+        const decoded = decodeURIComponent(errorMsg).replace(/\+/g, " ");
+        console.warn("OAuth Callback Notice:", decoded);
+        setGoogleOAuthError(decoded);
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   // Supabase Connection State
   const [supabaseStatus, setSupabaseStatus] = useState<"connected" | "disconnected" | "checking" | "error">("checking");
@@ -178,6 +213,121 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       client.removeChannel(channel);
     };
   }, [supabaseStatus]);
+
+  // Supabase Google OAuth State Listener
+  useEffect(() => {
+    const client = getSupabaseClient();
+    if (!client) return;
+
+    const { data: authListener } = client.auth.onAuthStateChange(async (event, session) => {
+      if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session?.user) {
+        const suUser = session.user;
+        const email = (suUser.email || "").trim().toLowerCase();
+        if (!email) return;
+
+        const name = 
+          suUser.user_metadata?.full_name || 
+          suUser.user_metadata?.name || 
+          email.split("@")[0] || 
+          "Google User";
+        const avatarUrl = 
+          suUser.user_metadata?.avatar_url || 
+          suUser.user_metadata?.picture || 
+          "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80";
+
+        // Check domain whitelist if enforced
+        const emailDomain = email.split("@")[1] || "";
+        const isDomainAllowed = googleConfig.allowedDomains.some(d => emailDomain.toLowerCase().endsWith(d.toLowerCase()));
+        
+        if (googleConfig.enforceDomainRestriction && !isDomainAllowed && !email.includes("admin")) {
+          alert(`ไม่อนุญาตให้เข้าสู่ระบบด้วยบัญชี @${emailDomain}\nเนื่องจากนโยบายโรงเรียนจำกัดเฉพาะโดเมน: ${googleConfig.allowedDomains.map(d => "@" + d).join(", ")}`);
+          await client.auth.signOut();
+          return;
+        }
+
+        // Look for existing user or provision new user
+        let targetUser = users.find(u => u.email.toLowerCase() === email);
+        if (!targetUser) {
+          const detectedRole: RoleType = email.includes("admin") 
+            ? "admin" 
+            : (email.includes("teacher") || email.includes("kru") ? "teacher" : googleConfig.defaultRole);
+
+          targetUser = {
+            id: suUser.id || `user-${Date.now()}`,
+            name,
+            email,
+            avatarUrl,
+            role: detectedRole,
+            department: detectedRole === "student" ? "นักเรียน (Google Workspace)" : "ฝ่ายวิชาการ",
+            schoolId: `GGL-${Math.floor(10000 + Math.random() * 90000)}`,
+            status: "active",
+            lastLoginAt: new Date().toISOString()
+          };
+
+          const updated = [...users.filter(u => u.email.toLowerCase() !== email), targetUser];
+          setUsers(updated);
+          localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+
+          if (detectedRole === "student") {
+            const newStudent: Student = {
+              id: targetUser.id,
+              name: targetUser.name,
+              learnerProfile: undefined
+            };
+            setEnvelope(prev => {
+              const nextStudents = [...prev.students.filter(s => s.id !== targetUser!.id), newStudent];
+              const nextEnv = { ...prev, students: nextStudents };
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
+              return nextEnv;
+            });
+          }
+
+          pushUserToCloud(targetUser).catch(err => console.warn("Cloud push error:", err));
+        } else {
+          targetUser = {
+            ...targetUser,
+            name: name || targetUser.name,
+            avatarUrl: avatarUrl || targetUser.avatarUrl,
+            lastLoginAt: new Date().toISOString()
+          };
+
+          const updated = users.map(u => u.id === targetUser!.id ? targetUser! : u);
+          setUsers(updated);
+          localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+          pushUserToCloud(targetUser).catch(err => console.warn("Cloud update error:", err));
+        }
+
+        if (targetUser.status === "suspended") {
+          alert("บัญชีนี้ถูกระงับการใช้งานชั่วคราวโดยผู้ดูแลระบบ กรุณาติดต่อฝ่ายสารสนเทศ");
+          await client.auth.signOut();
+          return;
+        }
+
+        setCurrentUserState(targetUser);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(targetUser));
+        const newRole: UserRole = { type: targetUser.role, id: targetUser.id };
+        setRoleState(newRole);
+        localStorage.setItem(DEMO_ROLE_KEY, JSON.stringify(newRole));
+
+        logAudit(
+          "Google OAuth Sign-In",
+          "auth",
+          `เข้าสู่ระบบสำเร็จผ่าน Google OAuth จริง: ${email} (${targetUser.role.toUpperCase()})`
+        );
+
+        setIsGoogleModalOpen(false);
+
+        // Clean URL hash
+        if (window.location.hash && (window.location.hash.includes("access_token") || window.location.hash.includes("error"))) {
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      }
+    });
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, [users, googleConfig]);
 
   useEffect(() => {
     // Load Users
@@ -385,10 +535,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setIsGoogleModalOpen(false);
   };
 
+  const signInWithGoogleOAuth = async (): Promise<{ success: boolean; message?: string }> => {
+    setGoogleOAuthError(null);
+    const res = await supabaseSignInWithGoogleOAuth();
+    if (!res.success) {
+      const errMsg = res.message || "เกิดข้อผิดพลาดในการเชื่อมต่อ Google OAuth";
+      setGoogleOAuthError(errMsg);
+      return { success: false, message: errMsg };
+    }
+    return { success: true };
+  };
+
   const logout = () => {
     if (currentUser) {
       logAudit("User Sign-Out", "auth", `ออกจากระบบ: ${currentUser.email}`);
     }
+    signOutFromSupabase().catch(e => console.warn("Supabase signout:", e));
     setCurrentUserState(null);
     localStorage.removeItem(AUTH_USER_KEY);
     // Reset to Teacher Demo as fallback
@@ -833,6 +995,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       openGoogleModal,
       closeGoogleModal,
       loginWithGoogle,
+      signInWithGoogleOAuth,
+      googleOAuthError,
+      clearGoogleOAuthError,
+      googleCallbackUrl,
       logout,
       updateUserRole,
       toggleUserStatus,

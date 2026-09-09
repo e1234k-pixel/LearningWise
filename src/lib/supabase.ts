@@ -130,3 +130,92 @@ export async function testSupabaseConnection(
     };
   }
 }
+
+/**
+ * คำนวณ Google OAuth Callback URL สำหรับนำไปกรอกใน Google Cloud Console
+ * รูปแบบ: https://<project-ref>.supabase.co/auth/v1/callback
+ */
+export function getGoogleCallbackUrl(): string {
+  const config = getStoredSupabaseConfig();
+  if (!config.url) return "";
+  try {
+    const parsed = new URL(config.url);
+    return `${parsed.origin}/auth/v1/callback`;
+  } catch {
+    return `${config.url.replace(/\/+$/, "")}/auth/v1/callback`;
+  }
+}
+
+/**
+ * ฟังก์ชันเข้าสู่ระบบด้วย Google OAuth 2.0 ผ่าน Supabase Auth
+ */
+export async function signInWithGoogleOAuth(
+  redirectTo?: string
+): Promise<{ success: boolean; url?: string; message?: string }> {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { 
+      success: false, 
+      message: "ยังไม่ได้เชื่อมต่อกับ Supabase กรุณาตรวจสอบการตั้งค่า URL และ Anon Key ในหน้า Admin" 
+    };
+  }
+
+  try {
+    // กำหนด Redirect URL ให้กลับมาที่หน้าเว็บเดิม (รองรับทั้ง localhost และ GitHub Pages)
+    const currentUrl = window.location.href.split("#")[0].split("?")[0];
+    const targetRedirect = redirectTo || currentUrl;
+
+    const { data, error } = await client.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: targetRedirect,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+      },
+    });
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    if (data?.url) {
+      return { success: true, url: data.url };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, message: err?.message || String(err) };
+  }
+}
+
+/**
+ * ออกจากระบบ Supabase Auth
+ */
+export async function signOutFromSupabase(): Promise<void> {
+  const client = getSupabaseClient();
+  if (!client) return;
+
+  try {
+    await client.auth.signOut();
+  } catch (err) {
+    console.warn("Supabase signOut error:", err);
+  }
+}
+
+/**
+ * ตรวจสอบ Session ล่าสุดจาก Supabase
+ */
+export async function getSupabaseAuthSession() {
+  const client = getSupabaseClient();
+  if (!client) return null;
+
+  try {
+    const { data } = await client.auth.getSession();
+    return data?.session || null;
+  } catch (err) {
+    console.warn("Error fetching Supabase session:", err);
+    return null;
+  }
+}
