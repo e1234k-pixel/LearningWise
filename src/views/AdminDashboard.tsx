@@ -22,10 +22,17 @@ import {
   Check,
   Zap,
   ArrowUpRight,
-  Trash2
+  Trash2,
+  Bot,
+  Cpu,
+  Eye,
+  EyeOff,
+  Sparkles,
+  ExternalLink
 } from "lucide-react";
 import { LamborghiniArcGauge } from "../components/cockpit/LamborghiniGauge";
-import type { RoleType, AuditLogEntry } from "../types";
+import { DEFAULT_AI_TUTOR_CONFIG } from "../services/aiTutorService";
+import type { RoleType, AuditLogEntry, AiTutorConfig } from "../types";
 
 const SCHEMA_SQL_SNIPPET = `-- ==============================================================================
 -- LearnWise Classroom — Supabase PostgreSQL Database Schema
@@ -198,10 +205,13 @@ export const AdminDashboard: React.FC = () => {
     fetchCloudData,
     deleteUser,
     googleCallbackUrl,
-    openGoogleModal
+    openGoogleModal,
+    aiTutorConfig,
+    updateAiTutorConfig,
+    testAiTutorConnection
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<"users" | "google" | "audit" | "classes" | "supabase">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "google" | "audit" | "classes" | "supabase" | "ai">("users");
   const [isRefreshingUsers, setIsRefreshingUsers] = useState(false);
   const [isCallbackCopied, setIsCallbackCopied] = useState(false);
   const [clientIdInput, setClientIdInput] = useState(googleConfig.clientId || "");
@@ -215,6 +225,20 @@ export const AdminDashboard: React.FC = () => {
   const [supabaseFeedback, setSupabaseFeedback] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
   const [isSqlCopied, setIsSqlCopied] = useState(false);
 
+  // AI Tutor Configuration Form States
+  const [aiApiKeyInput, setAiApiKeyInput] = useState(aiTutorConfig.apiKey || "");
+  const [aiModelInput, setAiModelInput] = useState(aiTutorConfig.model || "gemini-2.5-flash");
+  const [aiTeachingStyleInput, setAiTeachingStyleInput] = useState<"socratic" | "coder" | "concept">(aiTutorConfig.teachingStyle || "socratic");
+  const [aiSystemPromptInput, setAiSystemPromptInput] = useState(aiTutorConfig.systemPrompt || DEFAULT_AI_TUTOR_CONFIG.systemPrompt);
+  const [aiTemperatureInput, setAiTemperatureInput] = useState(aiTutorConfig.temperature ?? 0.7);
+  const [aiMaxTokensInput, setAiMaxTokensInput] = useState(aiTutorConfig.maxTokens ?? 1000);
+  const [aiEnabledInput, setAiEnabledInput] = useState(aiTutorConfig.enabled ?? true);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isTestingAi, setIsTestingAi] = useState(false);
+  const [isSavingAi, setIsSavingAi] = useState(false);
+  const [aiTestResult, setAiTestResult] = useState<{ success: boolean; latencyMs?: number; message: string; sampleResponse?: string } | null>(null);
+  const [aiSaveFeedback, setAiSaveFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
   useEffect(() => {
     if (supabaseConfig.url && !supabaseUrlInput) {
       setSupabaseUrlInput(supabaseConfig.url);
@@ -223,6 +247,16 @@ export const AdminDashboard: React.FC = () => {
       setSupabaseKeyInput(supabaseConfig.anonKey);
     }
   }, [supabaseConfig]);
+
+  useEffect(() => {
+    setAiApiKeyInput(aiTutorConfig.apiKey || "");
+    setAiModelInput(aiTutorConfig.model || "gemini-2.5-flash");
+    setAiTeachingStyleInput(aiTutorConfig.teachingStyle || "socratic");
+    setAiSystemPromptInput(aiTutorConfig.systemPrompt || DEFAULT_AI_TUTOR_CONFIG.systemPrompt);
+    setAiTemperatureInput(aiTutorConfig.temperature ?? 0.7);
+    setAiMaxTokensInput(aiTutorConfig.maxTokens ?? 1000);
+    setAiEnabledInput(aiTutorConfig.enabled ?? true);
+  }, [aiTutorConfig]);
 
   // User Management Filters & Modals
   const [searchQuery, setSearchQuery] = useState("");
@@ -506,6 +540,27 @@ export const AdminDashboard: React.FC = () => {
         >
           <School size={16} />
           <span>ข้อมูลหลักสูตรและชั้นเรียน</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("ai")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === "ai"
+              ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/20"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+          }`}
+        >
+          <Bot size={16} />
+          <span>🤖 ตั้งค่า AI Tutor (Gemini)</span>
+          {aiTutorConfig.apiKey ? (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">
+              API Ready
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-800">
+              Socratic Mock
+            </span>
+          )}
         </button>
       </div>
 
@@ -1329,6 +1384,455 @@ export const AdminDashboard: React.FC = () => {
               <div className="max-h-72 overflow-y-auto bg-slate-900 rounded-2xl p-4 font-mono text-[11px] leading-relaxed text-emerald-300/90 border border-slate-800 select-all">
                 <pre>{SCHEMA_SQL_SNIPPET}</pre>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 6: AI Tutor Management (Google Gemini) */}
+      {activeTab === "ai" && (
+        <div className="space-y-6">
+          {/* AI Hero Banner */}
+          <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 p-6 sm:p-8 rounded-3xl border border-purple-500/20 text-white shadow-xl relative overflow-hidden">
+            <div className="absolute -right-12 -top-12 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 shrink-0">
+                  <Bot size={28} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="text-[10px] font-mono uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                      <Sparkles size={11} />
+                      <span>Google Gemini 2.5 / 1.5 Architecture</span>
+                    </span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      ว 4.2 สาระเทคโนโลยี ม.4/1
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+                    ศูนย์ควบคุมปัญญาประดิษฐ์ AI Tutor สำหรับนักเรียน
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                    ระบบผู้ช่วยสอนแบบ Socratic Questioning ชี้แนะแนวคิด ให้คำใบ้ทีละระดับ (Scaffolding Hints) และแกะรอย Syntax / Logic Error โดยไม่เฉลยคำตอบตรงๆ
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Pill */}
+              <div className="flex items-center gap-3 self-start md:self-auto bg-slate-800/80 backdrop-blur-sm border border-slate-700/80 px-4 py-2.5 rounded-2xl">
+                {!aiEnabledInput ? (
+                  <>
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-500" />
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-400 font-mono">STATUS: DISABLED</div>
+                      <div className="text-[10px] text-slate-500">AI ปิดให้บริการชั่วคราว</div>
+                    </div>
+                  </>
+                ) : aiApiKeyInput.trim() ? (
+                  <>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <div>
+                      <div className="text-[11px] font-bold text-emerald-400 font-mono flex items-center gap-1">
+                        <span>LIVE GEMINI API</span>
+                        <CheckCircle size={12} />
+                      </div>
+                      <div className="text-[10px] text-slate-300 font-mono">{aiModelInput}</div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+                    <div>
+                      <div className="text-[11px] font-bold text-amber-400 font-mono">SOCRATIC FALLBACK</div>
+                      <div className="text-[10px] text-slate-300">ยังไม่ใส่ API Key (ใช้ AI จำลอง)</div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Feedback Toasts */}
+          {aiSaveFeedback && (
+            <div className={`p-4 rounded-2xl flex items-center justify-between gap-3 text-xs border ${
+              aiSaveFeedback.type === "success" 
+                ? "bg-emerald-50 text-emerald-900 border-emerald-200" 
+                : "bg-rose-50 text-rose-900 border-rose-200"
+            }`}>
+              <div className="flex items-center gap-2">
+                {aiSaveFeedback.type === "success" ? (
+                  <CheckCircle size={16} className="text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertTriangle size={16} className="text-rose-600 shrink-0" />
+                )}
+                <span className="font-semibold">{aiSaveFeedback.message}</span>
+              </div>
+              <button 
+                onClick={() => setAiSaveFeedback(null)} 
+                className="text-slate-400 hover:text-slate-600 font-bold px-2 py-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Configuration Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Column 1: API & Model Settings */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
+              <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Lock size={16} className="text-purple-600" />
+                    <span>การเชื่อมต่อ Google Gemini API</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    เชื่อมตรงจากเบราว์เซอร์ (Client-side) ด้วย REST API v1beta ปลอดภัยและรวดเร็ว
+                  </p>
+                </div>
+
+                {/* Enable/Disable Switch */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <span className="text-xs font-semibold text-slate-600">เปิดระบบ</span>
+                  <input
+                    type="checkbox"
+                    checked={aiEnabledInput}
+                    onChange={(e) => setAiEnabledInput(e.target.checked)}
+                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500 cursor-pointer"
+                  />
+                </label>
+              </div>
+
+              {/* API Key Input */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Google Gemini API Key <span className="text-rose-500">*</span>
+                  </label>
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-purple-600 hover:text-purple-800 hover:underline"
+                  >
+                    <span>ขอรับ API Key ฟรีที่ Google AI Studio</span>
+                    <ExternalLink size={11} />
+                  </a>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type={showApiKey ? "text" : "password"}
+                    value={aiApiKeyInput}
+                    onChange={(e) => setAiApiKeyInput(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="w-full pl-3 pr-10 py-2.5 text-xs font-mono rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                    title={showApiKey ? "ซ่อนรหัส" : "แสดงรหัส"}
+                  >
+                    {showApiKey ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-normal">
+                  คีย์จะถูกบันทึกเก็บในฐานข้อมูล Supabase Cloud ตาราง <code>system_settings</code> เพื่อให้นักเรียนทุกคนใช้งานได้ทันที
+                </p>
+              </div>
+
+              {/* Model Selection */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">
+                  โมเดล Google Gemini ที่ใช้งาน
+                </label>
+                <select
+                  value={aiModelInput}
+                  onChange={(e) => setAiModelInput(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 font-medium"
+                >
+                  <option value="gemini-2.5-flash">⚡ Gemini 2.5 Flash (แนะนำ — เร็ว ฉลาด วิเคราะห์โค้ดดีเยี่ยม Latency ต่ำสุด)</option>
+                  <option value="gemini-1.5-flash">🎯 Gemini 1.5 Flash (เสถียร รองรับโหลดสูง เหมาะสำหรับห้องเรียนทั่วไป)</option>
+                  <option value="gemini-1.5-pro">🧠 Gemini 1.5 Pro (วิเคราะห์ตรรกะและอัลกอริทึมเชิงลึกขั้นสูง)</option>
+                </select>
+              </div>
+
+              {/* Teaching Persona Selector */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-slate-700">
+                  สไตล์การสอนของ AI (Teaching Persona)
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {[
+                    {
+                      id: "socratic",
+                      title: "💡 Socratic Guide",
+                      desc: "กระตุ้นคิดด้วยคำถาม ชี้แนะทีละขั้น ไม่เฉลยคำตอบ (สพฐ.)",
+                      badge: "แนะนำ"
+                    },
+                    {
+                      id: "coder",
+                      title: "💻 Code Debugger",
+                      desc: "เน้นหา Syntax & Logic Error และวิเคราะห์ Test Cases",
+                      badge: "สายโค้ด"
+                    },
+                    {
+                      id: "concept",
+                      title: "📚 Concept Master",
+                      desc: "เน้นย่อยมโนทัศน์ ออกแบบขั้นตอนวิธี อธิบายง่าย",
+                      badge: "มโนทัศน์"
+                    }
+                  ].map((style) => (
+                    <button
+                      key={style.id}
+                      type="button"
+                      onClick={() => setAiTeachingStyleInput(style.id as "socratic" | "coder" | "concept")}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                        aiTeachingStyleInput === style.id
+                          ? "bg-purple-50/80 border-purple-300 ring-2 ring-purple-500/20 shadow-xs"
+                          : "bg-slate-50/60 border-slate-200 hover:bg-slate-100/80"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-xs text-slate-900">{style.title}</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                          aiTeachingStyleInput === style.id
+                            ? "bg-purple-200 text-purple-800"
+                            : "bg-slate-200 text-slate-600"
+                        }`}>
+                          {style.badge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-snug">{style.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Connectivity Test Button */}
+              <div className="pt-2 border-t border-slate-100 space-y-3">
+                <button
+                  type="button"
+                  disabled={isTestingAi || !aiApiKeyInput.trim()}
+                  onClick={async () => {
+                    setIsTestingAi(true);
+                    setAiTestResult(null);
+                    const candidateConfig: AiTutorConfig = {
+                      enabled: aiEnabledInput,
+                      provider: "gemini",
+                      apiKey: aiApiKeyInput.trim(),
+                      model: aiModelInput,
+                      teachingStyle: aiTeachingStyleInput,
+                      systemPrompt: aiSystemPromptInput.trim(),
+                      temperature: aiTemperatureInput,
+                      maxTokens: aiMaxTokensInput,
+                    };
+                    const res = await testAiTutorConnection(candidateConfig);
+                    setIsTestingAi(false);
+                    setAiTestResult(res);
+                  }}
+                  className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                    !aiApiKeyInput.trim()
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200"
+                      : "bg-slate-900 hover:bg-slate-800 text-white hover:-translate-y-0.5 active:scale-98"
+                  }`}
+                >
+                  {isTestingAi ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin text-purple-400" />
+                      <span>กำลังทดสอบเชื่อมต่อ Google Gemini REST API...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={14} className="text-amber-400" />
+                      <span>⚡ ทดสอบการเชื่อมต่อ API สด (Live Connection Test)</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Test Result Display */}
+                {aiTestResult && (
+                  <div className={`p-4 rounded-2xl border animate-in fade-in duration-200 space-y-2 ${
+                    aiTestResult.success 
+                      ? "bg-emerald-50/70 border-emerald-300 text-emerald-950" 
+                      : "bg-rose-50/70 border-rose-300 text-rose-950"
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-bold text-xs">
+                        {aiTestResult.success ? (
+                          <CheckCircle size={16} className="text-emerald-600" />
+                        ) : (
+                          <AlertTriangle size={16} className="text-rose-600" />
+                        )}
+                        <span>{aiTestResult.message}</span>
+                      </div>
+                      {aiTestResult.latencyMs && (
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          ⚡ {aiTestResult.latencyMs} ms
+                        </span>
+                      )}
+                    </div>
+
+                    {aiTestResult.sampleResponse && (
+                      <div className="bg-white/90 p-3 rounded-xl border border-emerald-200/80 text-[11px] text-slate-700 font-sans italic">
+                        <span className="font-bold not-italic text-emerald-800 block mb-1">ข้อความตอบกลับจากโมเดล:</span>
+                        "{aiTestResult.sampleResponse}"
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Column 2: System Prompt & Pedagogical Parameters */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
+              <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Sliders size={16} className="text-indigo-600" />
+                    <span>พารามิเตอร์การสอนและ System Prompt</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    กำหนดขอบเขตและกฎเหล็กการสอนของ AI ให้สอดคล้องกับหลักสูตรแกนกลาง
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("ต้องการรีเซ็ต System Prompt และพารามิเตอร์กลับเป็นค่ามาตรฐานหรือไม่?")) {
+                      setAiSystemPromptInput(DEFAULT_AI_TUTOR_CONFIG.systemPrompt);
+                      setAiTemperatureInput(DEFAULT_AI_TUTOR_CONFIG.temperature);
+                      setAiMaxTokensInput(DEFAULT_AI_TUTOR_CONFIG.maxTokens);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200 transition-all cursor-pointer"
+                >
+                  <RefreshCw size={11} />
+                  <span>รีเซ็ตค่าเริ่มต้น</span>
+                </button>
+              </div>
+
+              {/* System Prompt Editor */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-slate-700">
+                  คำสั่งระบบหลัก (System Prompt)
+                </label>
+                <textarea
+                  rows={8}
+                  value={aiSystemPromptInput}
+                  onChange={(e) => setAiSystemPromptInput(e.target.value)}
+                  className="w-full p-3 font-mono text-[11px] leading-relaxed rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all"
+                  placeholder="พิมพ์คำสั่งระบบสำหรับกำหนดบทบาทและแนวทางการชี้แนะของ AI..."
+                />
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>รองรับการปรับแต่งกฎเหล็ก เช่น ห้ามแจกเฉลย 100% หรือปรับเข้าหา UDL</span>
+                  <span>{aiSystemPromptInput.length} ตัวอักษร</span>
+                </div>
+              </div>
+
+              {/* Temperature Slider */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-semibold text-slate-700">
+                    Temperature (ระดับความคิดสร้างสรรค์): <span className="font-bold font-mono text-purple-700">{aiTemperatureInput}</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">
+                    {aiTemperatureInput <= 0.3 ? "มุ่งเน้นความแม่นยำสูง" : aiTemperatureInput <= 0.7 ? "สมดุล เหมาะกับการสอน" : "ยืดหยุ่น สร้างสรรค์สูง"}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1.0"
+                  step="0.05"
+                  value={aiTemperatureInput}
+                  onChange={(e) => setAiTemperatureInput(parseFloat(e.target.value))}
+                  className="w-full accent-purple-600 cursor-pointer"
+                />
+              </div>
+
+              {/* Max Tokens Slider */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <label className="font-semibold text-slate-700">
+                    Max Output Tokens (ความยาวคำตอบสูงสุด): <span className="font-bold font-mono text-indigo-700">{aiMaxTokensInput} tokens</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">~{Math.round(aiMaxTokensInput * 0.75)} คำภาษาไทย</span>
+                </div>
+                <input
+                  type="range"
+                  min="256"
+                  max="4096"
+                  step="128"
+                  value={aiMaxTokensInput}
+                  onChange={(e) => setAiMaxTokensInput(parseInt(e.target.value, 10))}
+                  className="w-full accent-indigo-600 cursor-pointer"
+                />
+              </div>
+
+              {/* Pedagogy Compliance Checklist */}
+              <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/80 space-y-2">
+                <div className="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                  <ShieldCheck size={15} className="text-indigo-600" />
+                  <span>เกณฑ์มาตรฐานการเรียนรู้ตามหลักสูตรแกนกลาง ว 4.2:</span>
+                </div>
+                <ul className="text-[11px] text-indigo-800 space-y-1 list-disc list-inside">
+                  <li><strong>Socratic Guardrail:</strong> ป้องกันการคัดลอกโค้ดหรือคำตอบโดยตรง 100%</li>
+                  <li><strong>Scaffolding Hints:</strong> ให้คำใบ้เป็นขั้นตอน 1 ➡️ 2 ➡️ 3 กระตุ้น Growth Mindset</li>
+                  <li><strong>UDL Support:</strong> ปรับคำอธิบายตามความต้องการจำเพาะของนักเรียนแต่ละคน</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Master Save Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Cloud size={16} className="text-purple-600" />
+              <span>การบันทึกจะซิงก์ตรงสู่ Supabase Cloud (<code>system_settings</code>) และเบราว์เซอร์ LocalStorage</span>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <button
+                type="button"
+                disabled={isSavingAi}
+                onClick={async () => {
+                  setIsSavingAi(true);
+                  setAiSaveFeedback(null);
+                  const newConfig: AiTutorConfig = {
+                    enabled: aiEnabledInput,
+                    provider: "gemini",
+                    apiKey: aiApiKeyInput.trim(),
+                    model: aiModelInput,
+                    teachingStyle: aiTeachingStyleInput,
+                    systemPrompt: aiSystemPromptInput.trim(),
+                    temperature: aiTemperatureInput,
+                    maxTokens: aiMaxTokensInput,
+                  };
+                  const res = await updateAiTutorConfig(newConfig);
+                  setIsSavingAi(false);
+                  setAiSaveFeedback({
+                    type: res.success ? "success" : "error",
+                    message: res.message
+                  });
+                }}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold shadow-lg shadow-purple-500/25 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer"
+              >
+                {isSavingAi ? (
+                  <>
+                    <RefreshCw size={15} className="animate-spin" />
+                    <span>กำลังบันทึกลงคลาวด์...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={15} />
+                    <span>บันทึกการตั้งค่า AI Tutor (Save & Sync)</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

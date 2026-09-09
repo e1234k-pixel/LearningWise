@@ -8,6 +8,7 @@ import { StudentQuizWorkspace } from "./views/StudentQuizWorkspace";
 import { TeacherGrading } from "./views/TeacherGrading";
 import { AdminDashboard } from "./views/AdminDashboard";
 import { GoogleSignInModal } from "./components/GoogleSignInModal";
+import { AiTutorDrawer } from "./components/AiTutorDrawer";
 
 export function AppContent() {
   const { role, envelope } = useApp();
@@ -63,6 +64,7 @@ export function AppContent() {
           )
         )}
       </main>
+      <AiTutorDrawer activeMissionId={selectedMissionId || undefined} />
     </div>
   );
 }

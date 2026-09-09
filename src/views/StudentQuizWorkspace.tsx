@@ -8,12 +8,13 @@ import {
   HelpCircle, 
   Sparkles,
   Check,
-  X
+  X,
+  Bot
 } from "lucide-react";
 import { mockQuizQuestions } from "../data/mock";
 
 export const StudentQuizWorkspace = ({ missionId, onBack }: { missionId: string; onBack: () => void }) => {
-  const { role, envelope, submitQuiz, recordPulseRating } = useApp();
+  const { role, envelope, submitQuiz, recordPulseRating, openAiDrawer } = useApp();
   
   // If retaking, isRetaking flag is true
   const [isRetaking, setIsRetaking] = useState(false);
@@ -86,9 +87,20 @@ export const StudentQuizWorkspace = ({ missionId, onBack }: { missionId: string;
             <span className="text-xs font-medium text-slate-500">• {mission.topic}</span>
           </div>
 
-          <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">
-            เกณฑ์ผ่าน: {mission.config.passPercent || 80}% (ต้องถูก 3/3 ข้อ)
-          </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => openAiDrawer("ช่วยอธิบายหลักการและแนวคิดสำคัญที่เกี่ยวข้องกับแบบทดสอบเรื่องนี้หน่อยครับ (ช่วยสรุปแนวคิดแบบไม่เฉลยคำตอบของแบบทดสอบ)")}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100/80 px-3 py-1.5 rounded-lg border border-purple-200/80 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer shadow-2xs"
+              title="ทบทวนมโนทัศน์กับ AI Tutor"
+            >
+              <Bot size={14} className="text-purple-600 animate-pulse" />
+              <span>💡 ปรึกษา AI Tutor ทบทวนมโนทัศน์</span>
+            </button>
+
+            <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full">
+              เกณฑ์ผ่าน: {mission.config.passPercent || 80}% (ต้องถูก 3/3 ข้อ)
+            </span>
+          </div>
         </div>
 
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">

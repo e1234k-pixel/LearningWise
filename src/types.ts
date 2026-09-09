@@ -224,3 +224,27 @@ export interface AuditLogEntry {
 
 // สถานะงานสำหรับแสดงผล
 export type WorkStatus = "not-started" | "started" | "submitted" | "changes-requested" | "reviewed";
+
+// การตั้งค่า AI Tutor (สำหรับ Admin จัดการ)
+export interface AiTutorConfig {
+  enabled: boolean;
+  provider: "gemini" | "custom";
+  apiKey: string;
+  model: string; // เช่น "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"
+  baseUrl?: string;
+  systemPrompt: string;
+  temperature: number; // 0.0 - 1.0
+  maxTokens: number;
+  teachingStyle: "socratic" | "coder" | "concept";
+}
+
+// ข้อความสนทนาระหว่างนักเรียนและ AI Tutor
+export interface AiChatMessage {
+  id: string;
+  sender: "user" | "assistant" | "system";
+  text: string;
+  timestamp: string;
+  modelUsed?: string;
+  isError?: boolean;
+}
+

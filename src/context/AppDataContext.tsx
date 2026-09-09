@@ -13,7 +13,8 @@ import type {
   GoogleWorkspaceConfig,
   AuditLogEntry,
   RoleType,
-  Student
+  Student,
+  AiTutorConfig
 } from "../types";
 import { 
   initialEnvelope, 
@@ -42,8 +43,13 @@ import {
   pushAuditLogToCloud,
   pushUserToCloud,
   deleteUserFromCloud,
+  pushAiTutorConfigToCloud,
   type CloudSyncResult
 } from "../services/supabaseService";
+import {
+  DEFAULT_AI_TUTOR_CONFIG,
+  testGeminiApiConnection
+} from "../services/aiTutorService";
 
 interface AppContextType {
   role: UserRole;
@@ -52,6 +58,13 @@ interface AppContextType {
   users: AuthUser[];
   googleConfig: GoogleWorkspaceConfig;
   auditLogs: AuditLogEntry[];
+  aiTutorConfig: AiTutorConfig;
+  updateAiTutorConfig: (config: Partial<AiTutorConfig>) => Promise<{ success: boolean; message: string }>;
+  testAiTutorConnection: (config?: AiTutorConfig) => Promise<{ success: boolean; message: string; latencyMs?: number }>;
+  isAiDrawerOpen: boolean;
+  openAiDrawer: (initialPrompt?: string) => void;
+  closeAiDrawer: () => void;
+  initialAiPrompt: string | null;
   isGoogleModalOpen: boolean;
   openGoogleModal: () => void;
   closeGoogleModal: () => void;
@@ -97,6 +110,7 @@ const USERS_KEY = "learnwise.users.v1";
 const AUTH_USER_KEY = "learnwise.auth.user.v1";
 const GOOGLE_CONFIG_KEY = "learnwise.google.config.v1";
 const AUDIT_LOGS_KEY = "learnwise.audit.logs.v1";
+const AI_TUTOR_CONFIG_KEY = "learnwise.ai.tutor.config.v1";
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRoleState] = useState<UserRole>({ type: "teacher", id: "teacher-demo" });
@@ -109,6 +123,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [googleOAuthError, setGoogleOAuthError] = useState<string | null>(null);
   const clearGoogleOAuthError = () => setGoogleOAuthError(null);
   const [googleCallbackUrl] = useState<string>(getGoogleCallbackUrl());
+
+  // AI Tutor States
+  const [aiTutorConfig, setAiTutorConfig] = useState<AiTutorConfig>(DEFAULT_AI_TUTOR_CONFIG);
+  const [isAiDrawerOpen, setIsAiDrawerOpen] = useState(false);
+  const [initialAiPrompt, setInitialAiPrompt] = useState<string | null>(null);
+
+  const openAiDrawer = (prompt?: string) => {
+    if (prompt) setInitialAiPrompt(prompt);
+    setIsAiDrawerOpen(true);
+  };
+  const closeAiDrawer = () => {
+    setIsAiDrawerOpen(false);
+    setInitialAiPrompt(null);
+  };
 
   // Detect OAuth error in URL on mount
   useEffect(() => {
@@ -165,6 +193,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                     ...(cloudData.envelope?.students ? { students: cloudData.envelope.students } : {}),
                   };
                   localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+                  return merged;
+                });
+              }
+              if (cloudData?.aiTutorConfig) {
+                setAiTutorConfig(prev => {
+                  const merged = { ...prev, ...cloudData.aiTutorConfig };
+                  localStorage.setItem(AI_TUTOR_CONFIG_KEY, JSON.stringify(merged));
                   return merged;
                 });
               }
@@ -358,6 +393,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setGoogleConfig(JSON.parse(savedConfig));
       } catch (e) {
         console.error("Failed to parse google config", e);
+      }
+    }
+
+    // Load AI Tutor Config
+    const savedAiConfig = localStorage.getItem(AI_TUTOR_CONFIG_KEY);
+    if (savedAiConfig) {
+      try {
+        setAiTutorConfig({ ...DEFAULT_AI_TUTOR_CONFIG, ...JSON.parse(savedAiConfig) });
+      } catch (e) {
+        console.error("Failed to parse AI tutor config", e);
       }
     }
 
@@ -980,7 +1025,37 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setAuditLogs(data.auditLogs);
       localStorage.setItem(AUDIT_LOGS_KEY, JSON.stringify(data.auditLogs));
     }
+    if (data.aiTutorConfig) {
+      setAiTutorConfig(prev => {
+        const merged = { ...prev, ...data.aiTutorConfig };
+        localStorage.setItem(AI_TUTOR_CONFIG_KEY, JSON.stringify(merged));
+        return merged;
+      });
+    }
     return { success: true, message: "ดึงข้อมูลล่าสุดจาก Supabase Cloud สำเร็จ" };
+  };
+
+  const updateAiTutorConfig = async (partial: Partial<AiTutorConfig>): Promise<{ success: boolean; message: string }> => {
+    try {
+      const updated = { ...aiTutorConfig, ...partial };
+      setAiTutorConfig(updated);
+      localStorage.setItem(AI_TUTOR_CONFIG_KEY, JSON.stringify(updated));
+
+      const cloudRes = await pushAiTutorConfigToCloud(updated);
+      logAudit("Update AI Tutor Config", "system", `อัปเดตการตั้งค่า AI Tutor (Model: ${updated.model}, Style: ${updated.teachingStyle})`);
+      return { 
+        success: true, 
+        message: cloudRes 
+          ? "บันทึกการตั้งค่า AI Tutor และซิงก์สู่ Supabase Cloud เรียบร้อยแล้ว" 
+          : "บันทึกการตั้งค่าในเบราว์เซอร์แล้ว (Supabase ยังไม่ได้เชื่อมต่อ)" 
+      };
+    } catch (e: any) {
+      return { success: false, message: e?.message || "บันทึกการตั้งค่าล้มเหลว" };
+    }
+  };
+
+  const testAiTutorConnection = async (overrideConfig?: AiTutorConfig) => {
+    return await testGeminiApiConnection(overrideConfig || aiTutorConfig);
   };
 
   return (
@@ -991,6 +1066,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       users,
       googleConfig,
       auditLogs,
+      aiTutorConfig,
+      updateAiTutorConfig,
+      testAiTutorConnection,
+      isAiDrawerOpen,
+      openAiDrawer,
+      closeAiDrawer,
+      initialAiPrompt,
       isGoogleModalOpen,
       openGoogleModal,
       closeGoogleModal,

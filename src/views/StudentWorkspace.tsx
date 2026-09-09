@@ -16,12 +16,13 @@ import {
   MessageSquareText,
   RefreshCw,
   Trophy,
-  Check
+  Check,
+  Bot
 } from "lucide-react";
 import { BeforeAfterModal } from "../components/BeforeAfterModal";
 
 export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onBack: () => void }) => {
-  const { role, envelope, saveDraft, submitAttempt, getWorkStatus, recordPulseRating } = useApp();
+  const { role, envelope, saveDraft, submitAttempt, getWorkStatus, recordPulseRating, openAiDrawer } = useApp();
   const [content, setContent] = useState("");
   const [revisionNote, setRevisionNote] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -159,13 +160,24 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
             <span className="text-xs font-medium text-slate-500">• {mission.topic}</span>
           </div>
 
-          <button
-            onClick={() => setShowRubric(!showRubric)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50/80 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-200/60 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
-          >
-            <ListChecks size={14} />
-            <span>{showRubric ? "ซ่อนเกณฑ์ประเมิน (Rubric)" : "ดูเกณฑ์ประเมิน (Rubric)"}</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => openAiDrawer("ช่วยอธิบายโจทย์และแนวทางการคิดแบบฝึกหัดนี้แบบ Socratic ให้หน่อยครับ")}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100/80 px-3 py-1.5 rounded-lg border border-purple-200/80 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer shadow-2xs"
+              title="เปิดผู้ช่วย AI Tutor ประจำวิชา"
+            >
+              <Bot size={14} className="text-purple-600 animate-pulse" />
+              <span>💡 ขอคำปรึกษา AI Tutor</span>
+            </button>
+
+            <button
+              onClick={() => setShowRubric(!showRubric)}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50/80 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-200/60 hover:-translate-y-0.5 active:scale-95 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:outline-none"
+            >
+              <ListChecks size={14} />
+              <span>{showRubric ? "ซ่อนเกณฑ์ประเมิน (Rubric)" : "ดูเกณฑ์ประเมิน (Rubric)"}</span>
+            </button>
+          </div>
         </div>
 
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
@@ -623,7 +635,21 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
               )}
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <button 
+                type="button"
+                onClick={() => openAiDrawer(
+                  mission.type === "coding"
+                    ? "ช่วยดูโค้ด Python ที่ฉันเขียนตอนนี้ให้หน่อยครับ มีจุดไหนที่ยังไม่ตรงตามโจทย์หรือเงื่อนไข ช่วยให้คำใบ้ทีละระดับครับ"
+                    : "ช่วยตรวจทานแนวคิดคำตอบของฉันตามเกณฑ์ Rubric 6 มิติ ให้หน่อยครับ มีส่วนไหนที่ควรปรับปรุงบ้างครับ"
+                )}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100/90 border border-purple-200/80 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none transition-all duration-150 cursor-pointer shadow-2xs"
+                title="ขอคำแนะนำและตรวจทานร่างกับ AI Tutor"
+              >
+                <Bot size={15} className="text-purple-600" />
+                <span>ปรึกษา AI Tutor</span>
+              </button>
+
               <button 
                 onClick={() => handleSaveDraft(false)}
                 className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-none transition-all duration-150 cursor-pointer shadow-2xs"

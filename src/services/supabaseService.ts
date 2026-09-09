@@ -8,7 +8,8 @@ import type {
   Review, 
   QuizHistoryEntry, 
   Mission, 
-  Student 
+  Student,
+  AiTutorConfig
 } from "../types";
 
 export interface CloudSyncResult {
@@ -211,6 +212,7 @@ export async function fetchFromSupabase(): Promise<{
   users?: AuthUser[];
   auditLogs?: AuditLogEntry[];
   googleConfig?: GoogleWorkspaceConfig;
+  aiTutorConfig?: AiTutorConfig;
 } | null> {
   const client = getSupabaseClient();
   if (!client) return null;
@@ -364,6 +366,10 @@ export async function fetchFromSupabase(): Promise<{
       const gConfig = settings.find((s: any) => s.key === "google_workspace_config");
       if (gConfig?.value) {
         result.googleConfig = gConfig.value;
+      }
+      const aiConfig = settings.find((s: any) => s.key === "ai_tutor_config");
+      if (aiConfig?.value) {
+        result.aiTutorConfig = aiConfig.value;
       }
     }
 
@@ -529,4 +535,29 @@ export async function deleteUserFromCloud(userId: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * บันทึกการตั้งค่า AI Tutor ขึ้น Supabase Cloud (ตาราง system_settings)
+ */
+export async function pushAiTutorConfigToCloud(config: AiTutorConfig): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client) return false;
+
+  try {
+    const { error } = await client.from("system_settings").upsert({
+      key: "ai_tutor_config",
+      value: config,
+    }, { onConflict: "key" });
+
+    if (error) {
+      console.warn("Cloud push AI tutor config error:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Error in pushAiTutorConfigToCloud:", err);
+    return false;
+  }
+}
+
 
