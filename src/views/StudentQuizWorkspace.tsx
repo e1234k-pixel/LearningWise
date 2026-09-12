@@ -43,7 +43,7 @@ export const StudentQuizWorkspace = ({ missionId, onBack }: { missionId: string;
       return;
     }
 
-    if (window.confirm("ยืนยันที่จะส่งคำตอบแบบทดสอบใช่หรือไม่?")) {
+    if (window.confirm("ยืนยันที่จะส่งแบบทดสอบนี้ให้ครูเมย์ตรวจใช่หรือไม่?")) {
       submitQuiz(missionId, role.id, answers);
       setIsRetaking(false);
     }
@@ -85,6 +85,9 @@ export const StudentQuizWorkspace = ({ missionId, onBack }: { missionId: string;
               แบบทดสอบ (Quiz)
             </span>
             <span className="text-xs font-medium text-slate-500">• {mission.topic}</span>
+            <span className="text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
+              👩‍🏫 ครูผู้สอน: ครูเมย์ ชลธิชา
+            </span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -187,7 +190,7 @@ export const StudentQuizWorkspace = ({ missionId, onBack }: { missionId: string;
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/20 active:scale-95 transition-all cursor-pointer shadow-xs"
               >
                 <Send size={14} />
-                <span>ส่งแบบทดสอบ</span>
+                <span>ส่งแบบทดสอบให้ครูเมย์ตรวจ</span>
               </button>
             </div>
           </div>

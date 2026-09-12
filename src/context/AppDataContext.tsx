@@ -50,6 +50,11 @@ import {
   DEFAULT_AI_TUTOR_CONFIG,
   testGeminiApiConnection
 } from "../services/aiTutorService";
+import {
+  enrollStudentInTeacherMayClass,
+  ensureTeacherMayClassEnrollment,
+  DEFAULT_NEW_STUDENT_PROFILE
+} from "../utils/userUtils";
 
 interface AppContextType {
   role: UserRole;
@@ -192,8 +197,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                     ...(cloudData.envelope?.quizHistory ? { quizHistory: cloudData.envelope.quizHistory } : {}),
                     ...(cloudData.envelope?.students ? { students: cloudData.envelope.students } : {}),
                   };
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-                  return merged;
+                  const reconciled = ensureTeacherMayClassEnrollment(merged, cloudData.users || users);
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));
+                  return reconciled;
                 });
               }
               if (cloudData?.aiTutorConfig) {
@@ -234,7 +240,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             }
             if (cloudData?.envelope?.students) {
               setEnvelope(prev => {
-                const nextEnv = { ...prev, students: cloudData.envelope!.students! };
+                const nextEnv = ensureTeacherMayClassEnrollment(
+                  { ...prev, students: cloudData.envelope!.students! },
+                  cloudData.users || users
+                );
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
                 return nextEnv;
               });
@@ -293,7 +302,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             email,
             avatarUrl,
             role: detectedRole,
-            department: detectedRole === "student" ? "นักเรียน (Google Workspace)" : "ฝ่ายวิชาการ",
+            department: detectedRole === "student" ? "นักเรียนห้องครูเมย์ (Google Workspace)" : "ฝ่ายวิชาการ",
             schoolId: `GGL-${Math.floor(10000 + Math.random() * 90000)}`,
             status: "active",
             lastLoginAt: new Date().toISOString()
@@ -309,11 +318,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               name: targetUser.name,
               schoolId: targetUser.schoolId,
               email: targetUser.email,
-              learnerProfile: undefined
+              learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
             };
             setEnvelope(prev => {
-              const nextStudents = [...prev.students.filter(s => s.id !== targetUser!.id), newStudent];
-              const nextEnv = { ...prev, students: nextStudents };
+              const nextEnv = enrollStudentInTeacherMayClass(prev, newStudent);
               localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
               return nextEnv;
             });
@@ -325,6 +333,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             ...targetUser,
             name: name || targetUser.name,
             avatarUrl: avatarUrl || targetUser.avatarUrl,
+            department: targetUser.role === "student" ? "นักเรียนห้องครูเมย์ (Google Workspace)" : targetUser.department,
             lastLoginAt: new Date().toISOString()
           };
 
@@ -332,6 +341,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           setUsers(updated);
           localStorage.setItem(USERS_KEY, JSON.stringify(updated));
           pushUserToCloud(targetUser).catch(err => console.warn("Cloud update error:", err));
+
+          if (targetUser.role === "student") {
+            const studentObj: Student = {
+              id: targetUser.id,
+              name: targetUser.name,
+              schoolId: targetUser.schoolId,
+              email: targetUser.email,
+              learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
+            };
+            setEnvelope(prev => {
+              const nextEnv = enrollStudentInTeacherMayClass(prev, studentObj);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
+              return nextEnv;
+            });
+          }
         }
 
         if (targetUser.status === "suspended") {
@@ -448,24 +472,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             }
           });
         }
-        if (parsed.students) {
-          parsed.students.forEach(s => {
-            if (!s.learnerProfile) {
-              const def = mockStudents.find(m => m.id === s.id);
-              if (def?.learnerProfile) s.learnerProfile = def.learnerProfile;
-            }
-          });
-        }
-        setEnvelope(parsed);
+        const reconciled = ensureTeacherMayClassEnrollment(parsed, activeUsers);
+        setEnvelope(reconciled);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));
       } catch (e) {
         console.error("Failed to parse envelope", e);
         const seeded = createSeededEnvelope();
-        setEnvelope(seeded);
+        const reconciled = ensureTeacherMayClassEnrollment(seeded, activeUsers);
+        setEnvelope(reconciled);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));
       }
     } else {
       const seeded = createSeededEnvelope();
-      setEnvelope(seeded);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+      const reconciled = ensureTeacherMayClassEnrollment(seeded, activeUsers);
+      setEnvelope(reconciled);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));
     }
 
     const savedRole = localStorage.getItem(DEMO_ROLE_KEY);
@@ -538,7 +559,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         email: account.email,
         avatarUrl: account.avatarUrl || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80",
         role: googleConfig.defaultRole,
-        department: googleConfig.defaultRole === "student" ? "นักเรียนใหม่ (Google Workspace)" : "ฝ่ายวิชาการ",
+        department: googleConfig.defaultRole === "student" ? "นักเรียนห้องครูเมย์ (Google Workspace)" : "ฝ่ายวิชาการ",
         schoolId: `GEN-${Math.floor(10000 + Math.random() * 90000)}`,
         status: "active",
         lastLoginAt: new Date().toISOString()
@@ -557,25 +578,42 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           name: targetUser.name,
           schoolId: targetUser.schoolId,
           email: targetUser.email,
-          learnerProfile: undefined
+          learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
         };
         setEnvelope(prev => {
-          if (prev.students.some(s => s.id === targetUser!.id)) return prev;
-          const nextStudents = [...prev.students, studentObj];
-          const nextEnv = { ...prev, students: nextStudents };
+          const nextEnv = enrollStudentInTeacherMayClass(prev, studentObj);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
           return nextEnv;
         });
       }
     } else {
       // Update last login
-      targetUser = { ...targetUser, lastLoginAt: new Date().toISOString() };
+      targetUser = { 
+        ...targetUser, 
+        department: targetUser.role === "student" ? "นักเรียนห้องครูเมย์ (Google Workspace)" : targetUser.department,
+        lastLoginAt: new Date().toISOString() 
+      };
       const updatedUsers = users.map(u => u.id === targetUser!.id ? targetUser! : u);
       setUsers(updatedUsers);
       localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
 
       // Update last login in Supabase Cloud
       pushUserToCloud(targetUser).catch(err => console.warn("Cloud update login error:", err));
+
+      if (targetUser.role === "student") {
+        const studentObj: Student = {
+          id: targetUser.id,
+          name: targetUser.name,
+          schoolId: targetUser.schoolId,
+          email: targetUser.email,
+          learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
+        };
+        setEnvelope(prev => {
+          const nextEnv = enrollStudentInTeacherMayClass(prev, studentObj);
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
+          return nextEnv;
+        });
+      }
     }
 
     if (targetUser.status === "suspended") {
@@ -677,16 +715,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setUsers(updated);
     localStorage.setItem(USERS_KEY, JSON.stringify(updated));
 
-    // If role is student, also sync into envelope.students
+    // If role is student, also sync into envelope.students and assign Teacher May's missions
     if (created.role === "student") {
       const newStudent: Student = {
         id: created.id,
         name: created.name,
-        learnerProfile: undefined
+        schoolId: created.schoolId,
+        email: created.email,
+        learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
       };
       setEnvelope(prev => {
-        const nextStudents = [...prev.students.filter(s => s.id !== created.id), newStudent];
-        const nextEnv = { ...prev, students: nextStudents };
+        const nextEnv = enrollStudentInTeacherMayClass(prev, newStudent);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
         return nextEnv;
       });

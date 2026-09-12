@@ -218,7 +218,7 @@ export const RoleSelector = () => {
                   <option value="teacher:teacher-demo">👩‍🏫 ครูเมย์ ชลธิชา (TCH-0421) (ครูผู้สอน)</option>
                 )}
               </optgroup>
-              <optgroup label={`นักเรียนในห้อง (${envelope.students.length} คน)`}>
+              <optgroup label={`นักเรียนห้องครูเมย์ (${envelope.students.length} คน)`}>
                 {envelope.students.map((s, idx) => {
                   const matchingUser = findMatchingUser(s, users);
                   return (

@@ -28,7 +28,9 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
   if (role.type !== "student") return null;
 
   const currentStudent = envelope.students.find(s => s.id === role.id);
-  const myMissions = envelope.missions.filter((m) => m.targetStudentIds.includes(role.id));
+  const myMissions = envelope.missions.filter((m) => 
+    !m.targetStudentIds || m.targetStudentIds.length === 0 || m.targetStudentIds.includes(role.id)
+  );
 
   // Count stats
   let countSubmitted = 0;
@@ -111,9 +113,9 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
     if (notStarted) {
       return {
         type: "start",
-        title: "ภารกิจใหม่พร้อมให้เรียนรู้",
-        message: `มีภารกิจ "${notStarted.title}" รอให้คุณเริ่มต้นทำ ลองอ่านโจทย์และส่งรอบแรกได้ทันที`,
-        actionText: "เริ่มทำภารกิจ",
+        title: "ภารกิจใหม่จากครูเมย์พร้อมให้เริ่มทำ",
+        message: `มีภารกิจ "${notStarted.title}" มอบหมายโดยครูเมย์ ชลธิชา รอให้คุณเริ่มต้นทำและส่งตรวจได้ทันที`,
+        actionText: "เริ่มทำภารกิจส่งครูเมย์",
         missionId: notStarted.id
       };
     }
@@ -141,13 +143,13 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
             <div>
               <div className="flex items-center gap-2 text-purple-100 text-xs font-semibold uppercase tracking-wider">
                 <GraduationCap size={14} />
-                <span>มุมมองนักเรียน</span>
+                <span>มุมมองนักเรียน • สังกัดห้องเรียนครูเมย์ ชลธิชา</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mt-0.5">
                 ยินดีต้อนรับ, {currentStudent?.name || "นักเรียน"}
               </h1>
               <p className="text-sm text-purple-100/90 mt-1">
-                ห้องเรียน Python Loops • มุ่งเน้นการแก้ไขงานจนเข้าใจจริง
+                ห้องเรียนครูเมย์ (Python Loops) • ภารกิจพร้อมให้นักเรียนลงมือทำและส่งตรวจได้ทันที
               </p>
             </div>
           </div>
@@ -338,12 +340,15 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
 
       {/* Missions Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <BookOpen size={20} className="text-purple-600" />
-            <h2 className="text-lg font-bold text-slate-850">ภารกิจการเรียนรู้ของคุณ</h2>
+            <h2 className="text-lg font-bold text-slate-850">ภารกิจที่ได้รับมอบหมายจากครูเมย์</h2>
           </div>
-          <span className="text-xs text-slate-500">แสดงภารกิจที่ได้รับมอบหมาย</span>
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-purple-700 bg-purple-50 px-3 py-1 rounded-full border border-purple-200">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            👩‍🏫 ครูผู้สอน: ครูเมย์ ชลธิชา (พร้อมทำส่งตรวจได้ทันที)
+          </span>
         </div>
 
         <div className="grid gap-4">
@@ -376,6 +381,9 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
                         {mission.type === "short-answer" ? "คำตอบสั้น (Short Answer)" : mission.type === "coding" ? "เขียนโค้ด (Coding)" : "แบบทดสอบ (Quiz)"}
                       </span>
                       <span className="text-xs font-medium text-slate-500">• {mission.topic}</span>
+                      <span className="text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
+                        👩‍🏫 ครูเมย์
+                      </span>
                       {attempts.length > 0 && (
                         <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
                           ส่งไปแล้ว {attempts.length} รอบ
@@ -430,7 +438,7 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
                         }`}
                       >
                         <span>
-                          {status === "not-started" ? "เริ่มทำภารกิจ" : status === "changes-requested" ? "ดู Feedback & แก้งาน" : "เปิดดูรายละเอียด"}
+                          {status === "not-started" ? "เริ่มทำส่งครูเมย์" : status === "changes-requested" ? "ดู Feedback & แก้งาน" : "เปิดดูรายละเอียด"}
                         </span>
                         <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                       </button>

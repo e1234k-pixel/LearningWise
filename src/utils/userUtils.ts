@@ -1,4 +1,4 @@
-import type { AuthUser, RoleType, Student } from "../types";
+import type { AuthUser, RoleType, Student, Envelope, LearnerProfile } from "../types";
 
 /**
  * ตรวจสอบว่า ID เป็น UUID หรือรหัสที่ถูกเจนอัตโนมัติ (เช่น Supabase Auth UUID หรือ timestamp) หรือไม่
@@ -132,3 +132,111 @@ export function findMatchingUser(
 ): AuthUser | undefined {
   return users.find(u => u.id === student.id || u.name.trim().toLowerCase() === student.name.trim().toLowerCase());
 }
+
+/**
+ * โพรไฟล์การเรียนรู้ตั้งต้นสำหรับนักเรียนใหม่ที่เข้ามาในห้องเรียนครูเมย์
+ */
+export const DEFAULT_NEW_STUDENT_PROFILE: LearnerProfile = {
+  persona: "Balanced Learner",
+  personaTitle: "สายสำรวจและพัฒนา (Adaptive Learner)",
+  tagline: "นักเรียนห้องครูเมย์ ชลธิชา พร้อมฝึกฝนและพัฒนาทักษะการคิดเชิงคำนวณอย่างเป็นระบบ",
+  affinityScores: { coding: 70, conceptual: 70, quiz: 75 },
+  telemetry: {
+    engagementSpeed: "เริ่มทันที (Fast)",
+    resilienceIndex: "มั่นคง (Steady)",
+    preferredModality: "เขียนโค้ด (Coding)"
+  },
+  teacherRecommendation: "ได้รับมอบหมายภารกิจจากครูเมย์เรียบร้อยแล้ว สามารถเริ่มทำแบบทดสอบ ข้อเขียน และเขียนโค้ดเพื่อส่งตรวจรับข้อเสนอแนะรายบุคคลได้ทันที"
+};
+
+/**
+ * บรรจุนักเรียนใหม่เข้าเป็นนักเรียนห้องครูเมย์ (Teacher May - teacher-demo)
+ * และมอบหมายภารกิจทั้งหมดของครูเมย์ให้นักเรียนทำส่งได้ทันที
+ */
+export function enrollStudentInTeacherMayClass(
+  envelope: Envelope,
+  student: Student
+): Envelope {
+  const studentWithProfile: Student = {
+    ...student,
+    learnerProfile: student.learnerProfile || DEFAULT_NEW_STUDENT_PROFILE
+  };
+
+  // 1. เพิ่มหรืออัปเดตนักเรียนในรายการ students
+  const studentExists = envelope.students.some(s => s.id === student.id);
+  const nextStudents = studentExists
+    ? envelope.students.map(s => s.id === student.id ? { ...studentWithProfile, learnerProfile: s.learnerProfile || DEFAULT_NEW_STUDENT_PROFILE } : s)
+    : [...envelope.students, studentWithProfile];
+
+  // 2. มอบหมายภารกิจของครูเมย์ทั้งหมดให้นักเรียนมีสิทธิ์ทำและส่งได้ทันที
+  const nextMissions = envelope.missions.map(mission => {
+    const currentTargets = mission.targetStudentIds || [];
+    if (!currentTargets.includes(student.id)) {
+      return {
+        ...mission,
+        targetStudentIds: [...currentTargets, student.id]
+      };
+    }
+    return mission;
+  });
+
+  return {
+    ...envelope,
+    students: nextStudents,
+    missions: nextMissions
+  };
+}
+
+/**
+ * ตรวจสอบและซิงก์นักเรียนทุกคนในระบบ (โดยเฉพาะผู้ที่ Login ด้วย Google หรือสร้างใหม่)
+ * ให้เข้าสังกัดห้องครูเมย์และได้รับมอบหมายงานของครูเมย์ครบถ้วนพร้อมส่งตรวจ
+ */
+export function ensureTeacherMayClassEnrollment(
+  envelope: Envelope,
+  allUsers?: AuthUser[]
+): Envelope {
+  const studentMap = new Map<string, Student>();
+  
+  // นำนักเรียนเดิมใน envelope เข้า map
+  envelope.students.forEach(s => {
+    studentMap.set(s.id, {
+      ...s,
+      learnerProfile: s.learnerProfile || DEFAULT_NEW_STUDENT_PROFILE
+    });
+  });
+
+  // นำ user ที่เป็น student แต่ยังไม่อยู่ใน envelope เข้า map
+  if (allUsers) {
+    allUsers.filter(u => u.role === "student").forEach(u => {
+      if (!studentMap.has(u.id)) {
+        studentMap.set(u.id, {
+          id: u.id,
+          name: u.name,
+          schoolId: u.schoolId,
+          email: u.email,
+          learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
+        });
+      }
+    });
+  }
+
+  const allStudentIds = Array.from(studentMap.keys());
+  const updatedStudents = Array.from(studentMap.values());
+
+  // มอบหมายภารกิจของห้องเรียนครูเมย์ให้นักเรียนทุกคนในห้อง
+  const updatedMissions = envelope.missions.map(mission => {
+    const targetSet = new Set(mission.targetStudentIds || []);
+    allStudentIds.forEach(id => targetSet.add(id));
+    return {
+      ...mission,
+      targetStudentIds: Array.from(targetSet)
+    };
+  });
+
+  return {
+    ...envelope,
+    students: updatedStudents,
+    missions: updatedMissions
+  };
+}
+

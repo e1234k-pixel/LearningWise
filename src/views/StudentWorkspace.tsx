@@ -93,7 +93,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
        return;
     }
 
-    if (window.confirm("ยืนยันที่จะส่งคำตอบรอบนี้ใช่หรือไม่?")) {
+    if (window.confirm("ยืนยันที่จะส่งงานชิ้นนี้ให้ครูเมย์ตรวจใช่หรือไม่?")) {
       submitAttempt({
         studentId: role.id,
         missionId,
@@ -158,6 +158,9 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
               {mission.type === "short-answer" ? "คำตอบสั้น" : mission.type}
             </span>
             <span className="text-xs font-medium text-slate-500">• {mission.topic}</span>
+            <span className="text-xs font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
+              👩‍🏫 ครูผู้สอน: ครูเมย์ ชลธิชา
+            </span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -663,7 +666,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
                 className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-500/20 active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none transition-all duration-150 cursor-pointer shadow-xs"
               >
                 <Send size={14} />
-                <span>ส่งคำตอบ</span>
+                <span>ส่งงานให้ครูเมย์ตรวจ</span>
               </button>
             </div>
           </div>
@@ -672,7 +675,7 @@ export const StudentWorkspace = ({ missionId, onBack }: { missionId: string, onB
         <div className="bg-white/80 backdrop-blur-md border border-purple-100/70 rounded-3xl p-6 text-center space-y-2 shadow-xs">
           <CheckCircle2 size={28} className="text-emerald-500 mx-auto" />
           <h3 className="font-bold text-slate-800 text-sm">
-            {status === "submitted" ? "คุณส่งคำตอบรอบนี้เรียบร้อยแล้ว" : "งานนี้ได้รับการตรวจปิดเรียบร้อยแล้ว"}
+            {status === "submitted" ? "คุณส่งงานให้ครูเมย์ตรวจเรียบร้อยแล้ว" : "งานนี้ได้รับการตรวจปิดเรียบร้อยแล้ว"}
           </h3>
           <p className="text-xs text-slate-500 max-w-md mx-auto">
             {status === "submitted" 
