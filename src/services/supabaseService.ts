@@ -257,6 +257,8 @@ export async function fetchFromSupabase(): Promise<{
         .map((p: any): Student => ({
           id: p.id,
           name: p.name,
+          schoolId: p.school_id || undefined,
+          email: p.email || undefined,
           learnerProfile: p.learner_profile || undefined,
         }));
 

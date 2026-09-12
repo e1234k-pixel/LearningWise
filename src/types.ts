@@ -160,6 +160,8 @@ export interface LearnerProfile {
 export interface Student {
   id: string;
   name: string;
+  schoolId?: string;
+  email?: string;
   learnerProfile?: LearnerProfile;
 }
 

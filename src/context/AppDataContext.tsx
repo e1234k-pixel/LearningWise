@@ -307,6 +307,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             const newStudent: Student = {
               id: targetUser.id,
               name: targetUser.name,
+              schoolId: targetUser.schoolId,
+              email: targetUser.email,
               learnerProfile: undefined
             };
             setEnvelope(prev => {
@@ -548,6 +550,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
       // Push newly provisioned user to Supabase Cloud
       pushUserToCloud(targetUser).catch(err => console.warn("Cloud push user error:", err));
+
+      if (targetUser.role === "student") {
+        const studentObj: Student = {
+          id: targetUser.id,
+          name: targetUser.name,
+          schoolId: targetUser.schoolId,
+          email: targetUser.email,
+          learnerProfile: undefined
+        };
+        setEnvelope(prev => {
+          if (prev.students.some(s => s.id === targetUser!.id)) return prev;
+          const nextStudents = [...prev.students, studentObj];
+          const nextEnv = { ...prev, students: nextStudents };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(nextEnv));
+          return nextEnv;
+        });
+      }
     } else {
       // Update last login
       targetUser = { ...targetUser, lastLoginAt: new Date().toISOString() };

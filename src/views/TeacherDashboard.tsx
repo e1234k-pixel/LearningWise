@@ -31,9 +31,10 @@ import { OfficialTranscriptModal } from "../components/OfficialTranscriptModal";
 import { ParentReportModal } from "../components/ParentReportModal";
 import { LamborghiniCockpitCluster, LamborghiniArcGauge } from "../components/cockpit/LamborghiniGauge";
 import { Student } from "../types";
+import { getCleanStudentId, isGoogleAccount, findMatchingUser } from "../utils/userUtils";
 
 export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string) => void }) => {
-  const { role, envelope, getWorkStatus } = useApp();
+  const { role, envelope, getWorkStatus, users } = useApp();
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"missions" | "roster" | "gradebook">("missions");
   const [cockpitMode, setCockpitMode] = useState<"strada" | "corsa">("corsa");
@@ -915,6 +916,11 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
                     });
                     const pct = Math.round((completed / envelope.missions.length) * 100);
 
+                    const studentIndex = envelope.students.findIndex(s => s.id === student.id);
+                    const matchingUser = findMatchingUser(student, users);
+                    const cleanId = getCleanStudentId(student, studentIndex, matchingUser);
+                    const isGoogle = isGoogleAccount(matchingUser, student.id);
+
                     return (
                       <tr key={student.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="p-3.5">
@@ -924,7 +930,17 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
                             </div>
                             <div>
                               <div className="font-bold text-slate-900">{student.name}</div>
-                              <div className="text-[11px] text-slate-400">{student.id}</div>
+                              <div className="text-[11px] text-slate-400 font-mono flex items-center gap-1.5 mt-0.5">
+                                <span>{cleanId}</span>
+                                {matchingUser?.schoolId && (
+                                  <span className="text-[10px] text-slate-500 font-sans">({matchingUser.schoolId})</span>
+                                )}
+                                {isGoogle && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 font-sans font-semibold">
+                                    Google
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>

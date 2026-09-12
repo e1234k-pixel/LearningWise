@@ -1,5 +1,6 @@
 import { useApp } from "../context/AppDataContext";
 import { Sparkles, RotateCcw, GraduationCap, School, ShieldAlert, ChevronDown, ShieldCheck, LogOut } from "lucide-react";
+import { formatUserOptionLabel, findMatchingUser } from "../utils/userUtils";
 
 export const RoleSelector = () => {
   const { 
@@ -10,12 +11,19 @@ export const RoleSelector = () => {
     loadSeededClassroom, 
     currentUser, 
     logout, 
-    openGoogleModal
+    openGoogleModal,
+    users
   } = useApp();
 
   const getRoleLabel = () => {
-    if (role.type === "admin") return "ผู้ดูแลระบบ";
-    if (role.type === "teacher") return "ครูเมย์";
+    if (role.type === "admin") {
+      const u = users.find(user => user.id === role.id && user.role === "admin");
+      return u?.name || "ผู้ดูแลระบบ";
+    }
+    if (role.type === "teacher") {
+      const u = users.find(user => user.id === role.id && user.role === "teacher");
+      return u?.name || "ครูเมย์";
+    }
     return envelope.students.find(s => s.id === role.id)?.name || "นักเรียน";
   };
 
@@ -173,17 +181,60 @@ export const RoleSelector = () => {
               }}
             >
               <optgroup label="ผู้ดูแลระบบโรงเรียน (Admin)">
-                <option value="admin:admin-001">🛡️ อ.ดร.สมศักดิ์ (Admin)</option>
+                {users.filter(u => u.role === "admin").length > 0 ? (
+                  users.filter(u => u.role === "admin").map((u, idx) => (
+                    <option key={u.id} value={`admin:${u.id}`}>
+                      {formatUserOptionLabel({
+                        icon: "🛡️",
+                        name: u.name,
+                        id: u.id,
+                        role: "admin",
+                        schoolId: u.schoolId,
+                        user: u,
+                        index: idx
+                      })}
+                    </option>
+                  ))
+                ) : (
+                  <option value="admin:admin-001">🛡️ อ.ดร.สมศักดิ์ นวัตกรรม (SCH-0001) (Admin)</option>
+                )}
               </optgroup>
               <optgroup label="ครูผู้สอน">
-                <option value="teacher:teacher-demo">👩‍🏫 ครูเมย์ (ครูประจำวิชา)</option>
+                {users.filter(u => u.role === "teacher").length > 0 ? (
+                  users.filter(u => u.role === "teacher").map((u, idx) => (
+                    <option key={u.id} value={`teacher:${u.id}`}>
+                      {formatUserOptionLabel({
+                        icon: "👩‍🏫",
+                        name: u.name,
+                        id: u.id,
+                        role: "teacher",
+                        schoolId: u.schoolId,
+                        user: u,
+                        index: idx
+                      })}
+                    </option>
+                  ))
+                ) : (
+                  <option value="teacher:teacher-demo">👩‍🏫 ครูเมย์ ชลธิชา (TCH-0421) (ครูผู้สอน)</option>
+                )}
               </optgroup>
-              <optgroup label="นักเรียนในห้อง (8 คน)">
-                {envelope.students.map((s) => (
-                  <option key={s.id} value={`student:${s.id}`}>
-                    🎓 {s.name} ({s.id})
-                  </option>
-                ))}
+              <optgroup label={`นักเรียนในห้อง (${envelope.students.length} คน)`}>
+                {envelope.students.map((s, idx) => {
+                  const matchingUser = findMatchingUser(s, users);
+                  return (
+                    <option key={s.id} value={`student:${s.id}`}>
+                      {formatUserOptionLabel({
+                        icon: "🎓",
+                        name: s.name,
+                        id: s.id,
+                        role: "student",
+                        schoolId: s.schoolId || matchingUser?.schoolId,
+                        user: matchingUser,
+                        index: idx
+                      })}
+                    </option>
+                  );
+                })}
               </optgroup>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-purple-400">

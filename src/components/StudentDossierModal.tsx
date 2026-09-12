@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { Student, Mission, Attempt, Review, QuizHistoryEntry, WorkStatus } from "../types";
 import { BeforeAfterModal } from "./BeforeAfterModal";
+import { useApp } from "../context/AppDataContext";
+import { getCleanStudentId, isGoogleAccount, findMatchingUser } from "../utils/userUtils";
 
 interface StudentDossierModalProps {
   isOpen: boolean;
@@ -61,6 +63,12 @@ export const StudentDossierModal: React.FC<StudentDossierModalProps> = ({
   const studentAttempts = attempts.filter(a => a.studentId === student.id);
   const studentQuizEntries = quizHistory.filter(q => q.studentId === student.id);
 
+  const { users, envelope } = useApp();
+  const studentIndex = envelope.students.findIndex(s => s.id === student.id);
+  const matchingUser = findMatchingUser(student, users);
+  const cleanId = getCleanStudentId(student, studentIndex >= 0 ? studentIndex : undefined, matchingUser);
+  const isGoogle = isGoogleAccount(matchingUser, student.id);
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fadeIn">
       <div 
@@ -82,7 +90,15 @@ export const StudentDossierModal: React.FC<StudentDossierModalProps> = ({
                 {student.name}
               </h2>
               <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-300">
-                <span>รหัส: {student.id}</span>
+                <span className="font-mono">รหัส: {cleanId}</span>
+                {matchingUser?.schoolId && (
+                  <span className="text-slate-400">({matchingUser.schoolId})</span>
+                )}
+                {isGoogle && (
+                  <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-200 border border-blue-400/30 text-[10px] font-semibold">
+                    Google Workspace
+                  </span>
+                )}
                 <span>•</span>
                 <span>สำเร็จ {completedCount}/{missions.length} ภารกิจ ({overallProgress}%)</span>
               </div>

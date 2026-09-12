@@ -3,9 +3,10 @@ import { useApp } from "../context/AppDataContext";
 import { X, Plus, BookOpen, Code, HelpCircle, Check, Users } from "lucide-react";
 import type { Mission, MissionType } from "../types";
 import { CHULA_EXERCISE_PRESETS, ChulaExercisePreset } from "../data/chulaExercises";
+import { getCleanStudentId, isGoogleAccount, findMatchingUser } from "../utils/userUtils";
 
 export const AssignmentCreatorModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
-  const { envelope, createMission } = useApp();
+  const { envelope, createMission, users } = useApp();
 
   const [type, setType] = useState<MissionType>("short-answer");
   const [title, setTitle] = useState("");
@@ -616,9 +617,12 @@ export const AssignmentCreatorModal = ({ isOpen, onClose }: { isOpen: boolean; o
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {envelope.students.map((s) => {
+              {envelope.students.map((s, idx) => {
                 const isSelected = selectedStudentIds.includes(s.id);
                 const persona = s.learnerProfile?.persona;
+                const matchingUser = findMatchingUser(s, users);
+                const cleanId = getCleanStudentId(s, idx, matchingUser);
+                const isGoogle = isGoogleAccount(matchingUser, s.id);
                 return (
                   <button
                     key={s.id}
@@ -631,17 +635,24 @@ export const AssignmentCreatorModal = ({ isOpen, onClose }: { isOpen: boolean; o
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span className="font-bold">{s.name}</span>
+                      <span className="font-bold truncate">{s.name}</span>
                       {isSelected && <Check size={13} className="text-blue-600 shrink-0" />}
                     </div>
-                    {persona && (
-                      <span className="text-[10px] text-slate-500 font-normal">
-                        {persona === "Hands-on Coder" ? "💻 Coder" :
-                         persona === "Conceptual Explainer" ? "✍️ Explainer" :
-                         persona === "Fast Explorer" ? "🎯 Explorer" :
-                         persona === "Resilient Improver" ? "🔄 Improver" : "⚖️ Balanced"}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] text-slate-400 font-mono">{cleanId}</span>
+                      {persona ? (
+                        <span className="text-[10px] text-slate-500 font-normal">
+                          {persona === "Hands-on Coder" ? "💻 Coder" :
+                           persona === "Conceptual Explainer" ? "✍️ Explainer" :
+                           persona === "Fast Explorer" ? "🎯 Explorer" :
+                           persona === "Resilient Improver" ? "🔄 Improver" : "⚖️ Balanced"}
+                        </span>
+                      ) : isGoogle ? (
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-blue-50 text-blue-600 border border-blue-200 font-medium font-sans">
+                          Google
+                        </span>
+                      ) : null}
+                    </div>
                   </button>
                 );
               })}

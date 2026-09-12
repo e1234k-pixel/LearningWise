@@ -10,6 +10,8 @@ import {
   Calendar
 } from "lucide-react";
 import { Student } from "../types";
+import { useApp } from "../context/AppDataContext";
+import { getCleanStudentId, findMatchingUser } from "../utils/userUtils";
 
 export interface GradeSummaryItem {
   student: Student;
@@ -36,7 +38,12 @@ export const ParentReportModal: React.FC<ParentReportModalProps> = ({
   student,
   gradeSummary
 }) => {
+  const { users, envelope } = useApp();
   if (!isOpen) return null;
+
+  const studentIndex = envelope.students.findIndex(s => s.id === student.id);
+  const matchingUser = findMatchingUser(student, users);
+  const cleanId = getCleanStudentId(student, studentIndex >= 0 ? studentIndex : undefined, matchingUser);
 
   const handlePrint = () => {
     window.print();
@@ -202,7 +209,9 @@ export const ParentReportModal: React.FC<ParentReportModalProps> = ({
               </div>
               <div>
                 <span className="text-slate-500 block text-[11px]">เลขประจำตัวนักเรียน:</span>
-                <span className="font-bold text-slate-800 font-mono">{student.id}</span>
+                <span className="font-bold text-slate-800 font-mono">
+                  {cleanId} {matchingUser?.schoolId ? `(${matchingUser.schoolId})` : ""}
+                </span>
               </div>
               <div>
                 <span className="text-slate-500 block text-[11px]">ระดับชั้น / ห้องเรียน:</span>
