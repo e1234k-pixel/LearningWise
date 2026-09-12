@@ -101,7 +101,7 @@ export const StudentQuizWorkspace = ({ missionId, onBack }: { missionId: string;
             </button>
 
             <span className="text-xs font-bold text-purple-900 bg-purple-50/80 border border-purple-100 px-2.5 py-1 rounded-full">
-              เกณฑ์ผ่าน: {mission.config.passPercent || 80}% (ต้องถูก 3/3 ข้อ)
+              เกณฑ์ผ่าน: {mission.config.passPercent || 80}% (ต้องถูกอย่างน้อย {Math.ceil(questions.length * (mission.config.passPercent || 80) / 100)}/{questions.length} ข้อ)
             </span>
           </div>
         </div>

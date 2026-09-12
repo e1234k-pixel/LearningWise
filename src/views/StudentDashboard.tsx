@@ -387,10 +387,10 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
                   )}
                 </div>
                 <h4 className="font-bold text-xs text-slate-900 mt-2.5">
-                  1. แบบทดสอบตรรกะไว (Quiz)
+                  1. แบบทดสอบตรรกะไว (Quiz 10 ข้อ)
                 </h4>
                 <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                  ทดสอบความเข้าใจลูป 3 ข้อ วัดความเร็วการตอบสนอง (Fast Explorer) และการจำแนกคำตอบ
+                  แบบทดสอบตรรกะและการวนลูป Python 10 ข้อ วัดความเร็วการตอบสนอง (Fast Explorer) และการจำแนกคำตอบ
                 </p>
                 {quizMission && (
                   <button
@@ -398,7 +398,7 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
                     onClick={() => onOpenMission(quizMission.id)}
                     className="mt-3 w-full py-1.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <span>{hasQuizDone ? "ดูผล / ทำซ้ำ" : "เริ่มทำแบบทดสอบ"}</span>
+                    <span>{hasQuizDone ? "ดูผล / ทำซ้ำ" : "เริ่มทำแบบทดสอบ (10 ข้อ)"}</span>
                     <ArrowRight size={13} />
                   </button>
                 )}
@@ -428,7 +428,7 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
                   2. อธิบายมโนทัศน์ (Short-Answer)
                 </h4>
                 <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                  เขียนอธิบายเหตุผลและขอบเขตของลูป วัดความเข้าใจเชิงลึก (Conceptual Explainer) และการสื่อสารตรรกะ
+                  วิเคราะห์ขอบเขต range() และแจกแจงผลลัพธ์ 3 ประเด็น วัดความเข้าใจเชิงลึก (Conceptual Explainer)
                 </p>
                 {saMission && (
                   <button
@@ -466,7 +466,7 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
                   3. เขียนโค้ดปฏิบัติจริง (Coding)
                 </h4>
                 <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                  ลงมือเขียนโปรแกรมลูป Python และรันผลจริง วัดทักษะปฏิบัติ (Hands-on Coder) และการ Debug
+                  เขียนฟังก์ชัน sum_to_n(n) และรันชุดทดสอบ 4 กรณี วัดทักษะปฏิบัติจริง (Hands-on Coder)
                 </p>
                 {codeMission && (
                   <button

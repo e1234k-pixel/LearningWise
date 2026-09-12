@@ -495,20 +495,21 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       try {
         const parsed: Envelope = JSON.parse(savedEnvelope);
         initialEnvelope.missions.forEach(m => {
-          if (!parsed.missions.some(x => x.id === m.id)) {
+          const idx = parsed.missions.findIndex(x => x.id === m.id);
+          if (idx === -1) {
             parsed.missions.push(m);
+          } else {
+            parsed.missions[idx] = {
+              ...parsed.missions[idx],
+              title: m.title,
+              description: m.description,
+              instructions: m.instructions,
+              config: m.config,
+            };
           }
         });
         if (!parsed.quizHistory) parsed.quizHistory = [];
-        if (!parsed.questions) {
-          parsed.questions = initialEnvelope.questions;
-        } else {
-          initialEnvelope.questions.forEach(q => {
-            if (!parsed.questions.some(x => x.id === q.id)) {
-              parsed.questions.push(q);
-            }
-          });
-        }
+        parsed.questions = initialEnvelope.questions;
         const reconciled = ensureTeacherMayClassEnrollment(parsed, activeUsers);
         setEnvelope(reconciled);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(reconciled));

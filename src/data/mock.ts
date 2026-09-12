@@ -141,7 +141,7 @@ export const mockStudents = [
 export const mockQuizQuestions: QuizQuestion[] = [
   {
     id: "q1",
-    prompt: "range(2, 6) ให้ค่าตามข้อใด?",
+    prompt: "คำสั่ง range(2, 6) ในภาษา Python จะสร้างลำดับตัวเลขตามข้อใด?",
     options: [
       { id: "opt-1", label: "ก", text: "2, 3, 4, 5" },
       { id: "opt-2", label: "ข", text: "2, 3, 4, 5, 6" },
@@ -149,11 +149,11 @@ export const mockQuizQuestions: QuizQuestion[] = [
       { id: "opt-4", label: "ง", text: "2, 4, 6" }
     ],
     correctOptionId: "opt-1",
-    explanation: "เริ่มที่ 2 และเพิ่มทีละ 1 แต่ไม่รวม 6 (stop) จึงได้ค่า 2, 3, 4, 5 รวมทั้งหมด 4 ค่า"
+    explanation: "เริ่มที่ 2 (start) และเพิ่มทีละ 1 แต่หยุดก่อนถึง 6 (stop จะไม่ถูกรวม) จึงได้ลำดับตัวเลขคือ 2, 3, 4, 5 รวมทั้งหมด 4 ค่า"
   },
   {
     id: "q2",
-    prompt: "ลูปต่อไปนี้ทำงานกี่รอบ?\n\nfor number in range(1, 4):\n    print(number)",
+    prompt: "ลูปต่อไปนี้จะวนทำงานกี่รอบ?\n\nfor number in range(1, 4):\n    print(number)",
     options: [
       { id: "opt-1", label: "ก", text: "2 รอบ" },
       { id: "opt-2", label: "ข", text: "3 รอบ" },
@@ -161,11 +161,11 @@ export const mockQuizQuestions: QuizQuestion[] = [
       { id: "opt-4", label: "ง", text: "5 รอบ" }
     ],
     correctOptionId: "opt-2",
-    explanation: "ตัวแปร number จะมีค่าเป็น 1, 2, และ 3 ตามลำดับ จึงวนทำงานทั้งหมด 3 รอบ"
+    explanation: "ตัวแปร number จะมีค่าเป็น 1, 2, และ 3 ตามลำดับ จึงวนทำงานทั้งหมด 3 รอบพอดี"
   },
   {
     id: "q3",
-    prompt: "หากต้องการให้ลูปใช้ค่าตั้งแต่ 1 ถึง 5 ครบทุกค่า ควรใช้ข้อใด?",
+    prompt: "หากต้องการให้ลูปใช้ค่าตั้งแต่ 1 ถึง 5 ครบทุกค่า (1, 2, 3, 4, 5) ควรใช้คำสั่ง range ในข้อใด?",
     options: [
       { id: "opt-1", label: "ก", text: "range(1, 5)" },
       { id: "opt-2", label: "ข", text: "range(0, 5)" },
@@ -173,26 +173,110 @@ export const mockQuizQuestions: QuizQuestion[] = [
       { id: "opt-4", label: "ง", text: "range(2, 6)" }
     ],
     correctOptionId: "opt-3",
-    explanation: "การรวมเลข 5 ต้องตั้ง stop เป็น 6 เพราะ range จะหยุดก่อนค่า stop เสมอ ส่วนค่าเริ่มต้น start ต้องเป็น 1"
+    explanation: "การจะรวมเลข 5 ต้องตั้งค่า stop เป็น 6 เพราะ range จะหยุดก่อนค่า stop เสมอ (stop - 1) ดังนั้น range(1, 6) จึงให้ค่า 1 ถึง 5"
+  },
+  {
+    id: "q4",
+    prompt: "คำสั่ง range(5) ที่ระบุพารามิเตอร์เพียงตัวเดียว จะให้ลำดับตัวเลขอย่างไร?",
+    options: [
+      { id: "opt-1", label: "ก", text: "1, 2, 3, 4, 5" },
+      { id: "opt-2", label: "ข", text: "0, 1, 2, 3, 4" },
+      { id: "opt-3", label: "ค", text: "0, 1, 2, 3, 4, 5" },
+      { id: "opt-4", label: "ง", text: "5, 4, 3, 2, 1" }
+    ],
+    correctOptionId: "opt-2",
+    explanation: "เมื่อใส่พารามิเตอร์ตัวเดียว ค่าเริ่มต้น (start) จะถูกกำหนดเป็น 0 เสมอโดยอัตโนมัติ และหยุดก่อน 5 จึงได้ 0, 1, 2, 3, 4 รวม 5 ตัว"
+  },
+  {
+    id: "q5",
+    prompt: "ผลลัพธ์ของคำสั่ง list(range(1, 10, 2)) ซึ่งมีการกำหนด step เป็น 2 คือข้อใด?",
+    options: [
+      { id: "opt-1", label: "ก", text: "[1, 3, 5, 7, 9]" },
+      { id: "opt-2", label: "ข", text: "[2, 4, 6, 8, 10]" },
+      { id: "opt-3", label: "ค", text: "[1, 2, 4, 6, 8, 10]" },
+      { id: "opt-4", label: "ง", text: "[1, 3, 5, 7]" }
+    ],
+    correctOptionId: "opt-1",
+    explanation: "เริ่มที่ 1 แล้วกระโดดเพิ่มทีละ 2 (step = 2) จะได้ 1, 3, 5, 7, 9 โดยตัวถัดไปคือ 11 ซึ่งเกิน stop (10) จึงหยุด"
+  },
+  {
+    id: "q6",
+    prompt: "โค้ดต่อไปนี้จะแสดงผลลัพธ์อย่างไรออกมาทางหน้าจอ?\n\nfor i in range(5, 0, -1):\n    print(i, end=\" \")",
+    options: [
+      { id: "opt-1", label: "ก", text: "5 4 3 2 1 0" },
+      { id: "opt-2", label: "ข", text: "5 4 3 2 1" },
+      { id: "opt-3", label: "ค", text: "4 3 2 1 0" },
+      { id: "opt-4", label: "ง", text: "1 2 3 4 5" }
+    ],
+    correctOptionId: "opt-2",
+    explanation: "การใช้ step เป็น -1 คือการนับถอยหลัง เริ่มที่ 5 และหยุดก่อนถึง 0 ดังนั้นตัวเลขสุดท้ายคือ 1 ได้ผลลัพธ์ 5 4 3 2 1"
+  },
+  {
+    id: "q7",
+    prompt: "พิจารณาโค้ดการบวกสะสมต่อไปนี้ ค่าของ total หลังจบลูปคือข้อใด?\n\ntotal = 0\nfor i in range(1, 4):\n    total += i\nprint(total)",
+    options: [
+      { id: "opt-1", label: "ก", text: "4" },
+      { id: "opt-2", label: "ข", text: "6" },
+      { id: "opt-3", label: "ค", text: "7" },
+      { id: "opt-4", label: "ง", text: "10" }
+    ],
+    correctOptionId: "opt-2",
+    explanation: "ค่า i ในแต่ละรอบคือ 1, 2, 3 เมื่อบวกสะสมลงใน total: รอบที่ 1: 0+1=1, รอบที่ 2: 1+2=3, รอบที่ 3: 3+3=6"
+  },
+  {
+    id: "q8",
+    prompt: "หากต้องการเขียนโปรแกรมหาผลคูณสะสม 1 * 2 * 3 * 4 (Factorial 4 = 24) โค้ดในข้อใดถูกต้องที่สุด?",
+    options: [
+      { id: "opt-1", label: "ก", text: "fact = 0\nfor i in range(1, 5):\n    fact *= i" },
+      { id: "opt-2", label: "ข", text: "fact = 1\nfor i in range(1, 4):\n    fact *= i" },
+      { id: "opt-3", label: "ค", text: "fact = 1\nfor i in range(1, 5):\n    fact *= i" },
+      { id: "opt-4", label: "ง", text: "fact = 1\nfor i in range(0, 5):\n    fact *= i" }
+    ],
+    correctOptionId: "opt-3",
+    explanation: "การคูณสะสมต้องตั้งค่าเริ่มต้น fact = 1 (ถ้าตั้ง 0 ผลลัพธ์จะเป็น 0 เสมอ) และใช้ range(1, 5) เพื่อให้ได้ตัวเลข 1, 2, 3, 4 ครบทั้ง 4 ตัว"
+  },
+  {
+    id: "q9",
+    prompt: "โค้ดต่อไปนี้ใช้คำสั่ง continue เพื่อข้ามบางรอบ ค่า count ที่พิมพ์ออกมาคือเท่าใด?\n\ncount = 0\nfor i in range(1, 6):\n    if i % 2 == 0:\n        continue\n    count += 1\nprint(count)",
+    options: [
+      { id: "opt-1", label: "ก", text: "2" },
+      { id: "opt-2", label: "ข", text: "3" },
+      { id: "opt-3", label: "ค", text: "4" },
+      { id: "opt-4", label: "ง", text: "5" }
+    ],
+    correctOptionId: "opt-2",
+    explanation: "range(1, 6) มีค่า 1, 2, 3, 4, 5 โดยเมื่อเจอเลขคู่ (2, 4) คำสั่ง continue จะข้ามไปรอบถัดไปทันที จึงมีเฉพาะเลขคี่ (1, 3, 5) รวม 3 รอบที่นับ count"
+  },
+  {
+    id: "q10",
+    prompt: "พิจารณาลูปซ้อนลูป (Nested Loops) ต่อไปนี้ เครื่องหมายดอกจัน (*) จะถูกพิมพ์ออกมาทั้งหมดกี่ตัว?\n\nfor row in range(2):\n    for col in range(3):\n        print(\"*\", end=\"\")",
+    options: [
+      { id: "opt-1", label: "ก", text: "5 ตัว" },
+      { id: "opt-2", label: "ข", text: "6 ตัว" },
+      { id: "opt-3", label: "ค", text: "8 ตัว" },
+      { id: "opt-4", label: "ง", text: "9 ตัว" }
+    ],
+    correctOptionId: "opt-2",
+    explanation: "ลูปนอก (row) ทำงาน 2 รอบ (0, 1) และในแต่ละรอบ ลูปใน (col) จะทำงาน 3 รอบ (0, 1, 2) ผลรวมคือ 2 x 3 = 6 ตัว"
   }
 ];
 
 export const mockQuizMission: Mission = {
   id: "mission-quiz-loop-001",
   type: "quiz",
-  title: "เช็กความเข้าใจเรื่องขอบเขตลูป",
+  title: "แบบทดสอบตรรกะและการวนลูป (Loop Logic Mastery 10 ข้อ)",
   topic: "ลูป Python",
   objectiveIds: ["python-range-boundary"],
-  description: "แบบทดสอบ 3 ข้อเพื่อเช็กความเข้าใจเรื่องค่าที่ได้จาก range และจำนวนรอบของลูป",
-  instructions: "เลือกคำตอบที่ถูกต้องที่สุดในแต่ละข้อ ระบบจะตรวจและแสดงผลเฉลยทันทีหลังส่ง สามารถทำซ้ำเพื่อฝึกฝนได้",
-  estimatedMinutes: 10,
+  description: "แบบทดสอบ 10 ข้อเพื่อเช็กความเข้าใจเรื่องค่าที่ได้จาก range, ขอบเขตลูป, step, การสะสมค่า และการวนลูปซ้อน",
+  instructions: "เลือกคำตอบที่ถูกต้องที่สุดในแต่ละข้อ (รวม 10 ข้อ) ระบบจะตรวจและแสดงผลเฉลยพร้อมคำอธิบายทันทีหลังส่ง สามารถทำซ้ำเพื่อฝึกฝนและพัฒนาความเข้าใจได้",
+  estimatedMinutes: 15,
   dueDate: getFutureDate(5),
   status: "published",
   targetStudentIds: mockStudents.map(s => s.id),
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   config: {
-    prompt: "ตอบคำถาม 3 ข้อเกี่ยวกับ range และการวนลูป",
+    prompt: "ตอบคำถาม 10 ข้อเกี่ยวกับ range และการวนลูปในภาษา Python",
     passPercent: 80,
     questions: mockQuizQuestions
   }
@@ -201,12 +285,34 @@ export const mockQuizMission: Mission = {
 export const mockShortAnswerMission: Mission = {
   id: "mission-sa-loop-001",
   type: "short-answer",
-  title: "อ่านลูปให้เข้าใจ แล้วแก้ขอบเขตให้ถูก",
+  title: "วิเคราะห์การทำงานของลูปและขอบเขต range()",
   topic: "ลูป Python",
   objectiveIds: ["python-range-boundary"],
-  description: "อธิบายขอบเขตของ range(start, stop) ที่เพิ่มครั้งละ 1",
-  instructions: `อ่านโค้ดนี้โดยยังไม่ต้องรัน:\n\n\`\`\`python\nfor number in range(1, 5):\n    print(number)\n\`\`\`\n\nตอบให้ครบสามส่วน:\n1. โค้ดแสดงตัวเลขใดบ้างตามลำดับ และลูปทำงานกี่รอบ?\n2. อธิบายบทบาทของเลข 1 และ 5 ใน range(1, 5) ว่าตัวใดถูกรวมและตัวใดไม่ถูกรวม\n3. ถ้าต้องการแสดงเลข 1 ถึง 5 ครบทุกตัว ให้แก้เฉพาะ range(...) แล้วเขียนตัวเลขที่คาดว่าจะแสดงและจำนวนรอบหลังแก้ไข`,
-  estimatedMinutes: 10,
+  description: "วิเคราะห์ลูป for ร่วมกับ range(start, stop) เพื่ออธิบายสาเหตุของ Off-by-one Error และแนวทางแก้ไข",
+  instructions: `🎯 โจทย์ภารกิจ: วิเคราะห์การทำงานของลูปและขอบเขต range() ใน Python
+
+จงพิจารณาโค้ดตัวอย่างต่อไปนี้โดยยังไม่ต้องรันในคอมพิวเตอร์:
+
+\`\`\`python
+# โปรแกรมแสดงตัวเลขเป้าหมาย 1 ถึง 5
+for number in range(1, 5):
+    print("รอบที่:", number)
+\`\`\`
+
+ให้นักเรียนตอบคำถามลงในช่องคำตอบให้ครบถ้วนทั้ง 3 ประเด็น:
+
+📌 ประเด็นที่ 1: การแจกแจงผลลัพธ์และจำนวนรอบ (Execution Tracing)
+- โค้ดชุดนี้จะพิมพ์ข้อความและตัวเลขใดออกมาบ้างตามลำดับ?
+- ลูปนี้จะทำงานทั้งหมดกี่รอบ?
+
+📌 ประเด็นที่ 2: การวิเคราะห์บทบาทของ Start และ Stop (Conceptual Analysis)
+- อธิบายความหมายของเลข 1 (start) และเลข 5 (stop) ในคำสั่ง range(1, 5)
+- เหตุใดตัวเลข 5 จึงไม่ถูกพิมพ์ออกมาในผลลัพธ์? (อธิบายหลักการ Half-open interval / ขอบเขต [start, stop))
+
+📌 ประเด็นที่ 3: การแก้ไขข้อผิดพลาด (Debugging & Fix)
+- หากต้องการให้โปรแกรมพิมพ์ตัวเลขตั้งแต่ 1 ถึง 5 ครบทุกตัว จะต้องแก้ไขคำสั่ง range(...) เป็นอย่างไร?
+- ระบุคำสั่งที่ถูกต้อง พร้อมทั้งแจกแจงตัวเลขที่จะแสดงและจำนวนรอบหลังแก้ไข เพื่อยืนยันความถูกต้อง`,
+  estimatedMinutes: 15,
   dueDate: getFutureDate(7),
   status: "published",
   targetStudentIds: mockStudents.map(s => s.id),
@@ -214,8 +320,8 @@ export const mockShortAnswerMission: Mission = {
   updatedAt: new Date().toISOString(),
   config: {
     prompt: "",
-    minLength: 10,
-    maxLength: 2000,
+    minLength: 20,
+    maxLength: 2500,
     rubric: {
       criteria: [
         {
@@ -230,12 +336,12 @@ export const mockShortAnswerMission: Mission = {
         },
         {
           id: "c2",
-          label: "B. เหตุผลเรื่องขอบเขต",
+          label: "B. เหตุผลเรื่องขอบเขต (Start & Stop)",
           maxPoints: 2,
           levels: {
             "0": "ไม่อธิบาย หรือไม่มีข้ออธิบายที่ถูกต้อง",
             "1": "อธิบายจุดเริ่มหรือการเพิ่มทีละ 1 ได้ แต่ยังไม่อธิบายหรือเข้าใจผิดว่ารวม stop",
-            "2": "อธิบายว่าเริ่มที่ 1 รวมค่าเริ่มต้น และหยุดก่อน 5 เพราะไม่รวม stop"
+            "2": "อธิบายว่าเริ่มที่ 1 รวมค่าเริ่มต้น และหยุดก่อน 5 เพราะ range ใน Python ไม่รวมค่า stop"
           }
         },
         {
@@ -245,7 +351,7 @@ export const mockShortAnswerMission: Mission = {
           levels: {
             "0": "ไม่แก้ขอบเขต หรือขอบเขตใหม่ยังไม่แสดง 1 ถึง 5 ตามโจทย์",
             "1": "แก้เป็น range(1, 6) ถูกต้อง แต่ยังขาดหรือระบุรายการค่า/จำนวนรอบผิด",
-            "2": "แก้เป็น range(1, 6) พร้อมระบุ 1, 2, 3, 4, 5 และ 5 รอบถูกต้อง"
+            "2": "แก้เป็น range(1, 6) พร้อมระบุ 1, 2, 3, 4, 5 และ 5 รอบถูกต้องสมบูรณ์"
           }
         }
       ],
@@ -258,11 +364,26 @@ export const mockShortAnswerMission: Mission = {
 export const mockCodingMission: Mission = {
   id: "mission-code-loop-001",
   type: "coding",
-  title: "บวกให้ครบถึงตัวสุดท้าย (sum_to_n)",
+  title: "บวกให้ครบถึงตัวสุดท้าย: ฟังก์ชัน sum_to_n(n)",
   topic: "ลูป Python",
   objectiveIds: ["python-accumulate-loop"],
-  description: "เขียนฟังก์ชัน sum_to_n(n) เพื่อหาผลรวมจำนวนเต็มตั้งแต่ 1 ถึง n (รวม n ด้วย)",
-  instructions: `เขียนฟังก์ชัน sum_to_n(n) โดยเติมลูปเพื่อบวกจำนวนเต็มตั้งแต่ 1 ถึง n ครบทุกค่า\n\nเงื่อนไขข้อมูลเข้า: n เป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป\n\nสิ่งที่ต้องทำ:\n1. เขียนโค้ดลูปบวกสะสมในฟังก์ชัน sum_to_n(n)\n2. อธิบายเหตุผลที่เลือกขอบเขต range ในคอมเมนต์\n3. เขียนแสดงการไล่ค่า (Trace) สำหรับ n = 1 และ n = 3 ในคอมเมนต์\n\n*หมายเหตุ: งานนี้ครูผู้สอนเป็นผู้ตรวจโค้ดและคอมเมนต์ด้วยตนเอง ระบบไม่มีการรันโค้ดจริง*`,
+  description: "เขียนฟังก์ชัน sum_to_n(n) เพื่อหาผลรวมจำนวนเต็มตั้งแต่ 1 ถึง n (รวม n ด้วย) พร้อมทดสอบรันผลจริง",
+  instructions: `🎯 โจทย์ภารกิจ: เขียนฟังก์ชันคำนวณผลรวมสะสม sum_to_n(n) ในภาษา Python
+
+โรงเรียนมอบหมายให้นักเรียนสร้างฟังก์ชัน sum_to_n(n) ที่รับค่าจำนวนเต็มบวก n แล้วคำนวณหาผลรวมตั้งแต่ 1 ถึง n:
+1 + 2 + 3 + ... + n
+
+⚙️ ข้อกำหนดและเงื่อนไข:
+1. ต้องใช้คำสั่งลูป for ร่วมกับฟังก์ชัน range(...) ในการวนรอบบวกสะสมค่าลงในตัวแปร total
+2. ฟังก์ชันต้อง return ผลรวมตัวเลขจำนวนเต็มที่ถูกต้อง
+3. ห้ามใช้สูตรคณิตศาสตร์ลัด n*(n+1)//2 หรือฟังก์ชัน sum(range(...)) เพื่อฝึกทักษะการควบคุมลูปจริง
+4. เขียนคอมเมนต์อธิบายเหตุผลการกำหนด range และแสดงการไล่ค่า (Trace) สำหรับ n = 3
+
+🧪 ชุดข้อมูลทดสอบ (Test Cases):
+- sum_to_n(1) -> ผลลัพธ์ต้องได้ 1
+- sum_to_n(3) -> ผลลัพธ์ต้องได้ 6 (1 + 2 + 3)
+- sum_to_n(5) -> ผลลัพธ์ต้องได้ 15 (1 + 2 + 3 + 4 + 5)
+- sum_to_n(10) -> ผลลัพธ์ต้องได้ 55`,
   estimatedMinutes: 20,
   dueDate: getFutureDate(10),
   status: "published",
@@ -270,30 +391,61 @@ export const mockCodingMission: Mission = {
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   config: {
-    prompt: "เขียนฟังก์ชัน sum_to_n(n)",
+    prompt: "เขียนฟังก์ชัน sum_to_n(n) โดยใช้ลูป for และ range",
     language: "python",
-    starterCode: `# อธิบายเหตุผลที่เลือกขอบเขต range ตรงนี้:\n# ...\n\n# ไล่ค่า n = 1: number แต่ละรอบและ total หลังบวก\n# ...\n\n# ไล่ค่า n = 3: number แต่ละรอบและ total หลังบวก\n# ...\n\ndef sum_to_n(n):\n    total = 0\n    # เติมลูปเพื่อบวกจำนวนเต็มตั้งแต่ 1 ถึง n\n    for number in range(1, n + 1):\n        total = total + number\n    return total\n`,
-    inputConstraints: "n เป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป (n >= 1)",
+    starterCode: `# ==============================================================================
+# ภารกิจ: เขียนฟังก์ชัน sum_to_n(n) เพื่อหาผลรวม 1 ถึง n
+# ==============================================================================
+
+# 1. อธิบายเหตุผลที่เลือกขอบเขต range(...) ด้านล่างนี้:
+# คำตอบ: ...
+
+# 2. แสดงการไล่ค่า (Trace) สำหรับ n = 3 ในคอมเมนต์:
+# รอบที่ 1: number = 1, total = 0 + 1 = 1
+# รอบที่ 2: number = 2, total = 1 + 2 = 3
+# รอบที่ 3: number = 3, total = 3 + 3 = 6
+
+def sum_to_n(n: int) -> int:
+    """
+    คำนวณผลรวมจำนวนเต็มตั้งแต่ 1 ถึง n (รวม n ด้วย)
+    ตัวอย่าง: sum_to_n(3) -> 6
+    """
+    total = 0
+    # TODO: เติมลูป for และ range เพื่อบวกสะสมค่า 1 ถึง n ให้ครบถ้วน
+    for number in range(1, n + 1):
+        total = total + number
+    
+    return total
+
+# ทดสอบเรียกใช้งานฟังก์ชัน
+if __name__ == "__main__":
+    print("sum_to_n(1) =", sum_to_n(1))   # ควรได้ 1
+    print("sum_to_n(3) =", sum_to_n(3))   # ควรได้ 6
+    print("sum_to_n(5) =", sum_to_n(5))   # ควรได้ 15
+    print("sum_to_n(10) =", sum_to_n(10)) # ควรได้ 55
+`,
+    inputConstraints: "n เป็นจำนวนเต็มบวกตั้งแต่ 1 ขึ้นไป (n >= 1)",
     examples: [
       { input: "sum_to_n(1)", output: "1", note: "บวกเลข 1 เพียงตัวเดียว" },
       { input: "sum_to_n(3)", output: "6", note: "1 + 2 + 3 = 6" },
-      { input: "sum_to_n(5)", output: "15", note: "1 + 2 + 3 + 4 + 5 = 15" }
+      { input: "sum_to_n(5)", output: "15", note: "1 + 2 + 3 + 4 + 5 = 15" },
+      { input: "sum_to_n(10)", output: "55", note: "1 + 2 + ... + 10 = 55" }
     ],
     rubric: {
       criteria: [
         {
           id: "c1",
-          label: "A. ขอบเขตและผลลัพธ์ถูกต้อง",
+          label: "A. ขอบเขตและผลลัพธ์ถูกต้อง (Boundary & Correctness)",
           maxPoints: 2,
           levels: {
-            "0": "ขอบเขตไม่ถูกต้อง ผลลัพธ์ผิดพลาด",
-            "1": "ขอบเขตเริ่มถูก แต่ขาดค่า n (เช่น ใช้ range(1, n)) ทำให้บวกไม่ถึงตัวสุดท้าย",
-            "2": "ใช้ range(1, n + 1) ถูกต้อง และคืนค่าผลรวมถูกต้องสมบูรณ์"
+            "0": "ขอบเขตไม่ถูกต้อง ผลลัพธ์ผิดพลาดทุกกรณี",
+            "1": "ขอบเขตเริ่มถูก แต่ขาดค่า n (เช่น ใช้ range(1, n)) ทำให้ผลรวมขาดตัวสุดท้าย",
+            "2": "ใช้ range(1, n + 1) ถูกต้อง และคืนค่าผลรวมถูกต้องสมบูรณ์ทุก Test Case"
           }
         },
         {
           id: "c2",
-          label: "B. โครงสร้างการบวกสะสม",
+          label: "B. โครงสร้างการบวกสะสม (Accumulator Pattern)",
           maxPoints: 2,
           levels: {
             "0": "ไม่ใช้ลูป หรือไม่มีตัวแปรสะสมค่า",
@@ -303,12 +455,12 @@ export const mockCodingMission: Mission = {
         },
         {
           id: "c3",
-          label: "C. การอธิบายและไล่ค่าในคอมเมนต์",
+          label: "C. การอธิบายและไล่ค่าในคอมเมนต์ (Code Tracing)",
           maxPoints: 2,
           levels: {
             "0": "ไม่มีคอมเมนต์อธิบาย",
-            "1": "มีคอมเมนต์แต่ไล่ค่าไม่ครบทั้ง n=1 และ n=3",
-            "2": "อธิบายเหตุผลเรื่อง stop = n + 1 ชัดเจน และไล่ค่า n=1 กับ n=3 ถูกต้องครบถ้วน"
+            "1": "มีคอมเมนต์แต่ไล่ค่าไม่ครบถ้วน หรืออธิบายไม่ชัดเจน",
+            "2": "อธิบายเหตุผลเรื่อง stop = n + 1 ชัดเจน และไล่ค่า n = 3 ถูกต้องครบถ้วน"
           }
         }
       ],
