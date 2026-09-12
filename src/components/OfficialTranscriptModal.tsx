@@ -167,21 +167,32 @@ export const OfficialTranscriptModal: React.FC<OfficialTranscriptModalProps> = (
                       {item.pathway}
                     </td>
                     <td className="p-2 text-center font-bold text-slate-900">
-                      {item.rawScore.toFixed(1)}
+                      {item.letterGrade === "ร" || item.letterGrade === "รอตรวจ" ? "-" : item.rawScore.toFixed(1)}
                     </td>
                     <td className="p-2 text-center font-semibold text-slate-800">
-                      {item.percentScore}%
+                      {item.letterGrade === "ร" || item.letterGrade === "รอตรวจ" ? "-" : `${item.percentScore}%`}
                     </td>
                     <td className="p-2 text-center font-black">
-                      <span className={item.letterGrade === "4.0" ? "text-emerald-700" : "text-blue-700"}>
+                      <span className={
+                        item.letterGrade === "4.0" ? "text-emerald-700" :
+                        item.letterGrade === "3.5" ? "text-blue-700" :
+                        item.letterGrade === "ร" ? "text-rose-700 font-black" :
+                        item.letterGrade === "รอตรวจ" ? "text-amber-700 font-black" : "text-slate-700"
+                      }>
                         {item.letterGrade}
                       </span>
                     </td>
                     <td className="p-2 text-center">
-                      <span className="inline-flex items-center gap-1 font-bold text-emerald-800 text-[11px]">
-                        <Check size={12} className="text-emerald-600 stroke-[3]" />
-                        <span>ผ่านเกณฑ์</span>
-                      </span>
+                      {item.isMastered ? (
+                        <span className="inline-flex items-center gap-1 font-bold text-emerald-800 text-[11px]">
+                          <Check size={12} className="text-emerald-600 stroke-[3]" />
+                          <span>ผ่านเกณฑ์</span>
+                        </span>
+                      ) : item.letterGrade === "รอตรวจ" ? (
+                        <span className="text-amber-700 font-bold text-[11px]">รอประเมิน</span>
+                      ) : (
+                        <span className="text-rose-600 font-bold text-[11px]">รอส่งงาน</span>
+                      )}
                     </td>
                   </tr>
                 ))}

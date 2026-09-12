@@ -43,7 +43,7 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
   const [rosterSearch, setRosterSearch] = useState("");
   const [rosterFilter, setRosterFilter] = useState<"all" | "pending" | "changes" | "done" | "coder" | "explainer" | "explorer">("all");
   const [gradebookSearch, setGradebookSearch] = useState("");
-  const [gradebookFilter, setGradebookFilter] = useState<"all" | "g4" | "g35" | "coder" | "explainer" | "explorer">("all");
+  const [gradebookFilter, setGradebookFilter] = useState<"all" | "g4" | "g35" | "pending" | "coder" | "explainer" | "explorer">("all");
   const [showExportToast, setShowExportToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("เตรียมรายงานแบบ ปพ.5 พร้อมพิมพ์เรียบร้อยแล้ว");
   const [isTranscriptModalOpen, setIsTranscriptModalOpen] = useState(false);
@@ -161,8 +161,15 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
       }
     });
 
-    // Provide reliable high score for mock students
-    if (highestPercent === 0) {
+    const hasAttemptEvidence = studentAttempts.length > 0;
+    const hasQuizEvidence = studentQuizzes.length > 0;
+    const hasAnyEvidence = hasAttemptEvidence || hasQuizEvidence;
+    const hasReviewedEvidence = studentReviews.length > 0 || hasQuizEvidence;
+
+    // Check if student is a mock student (student-001 to student-008) to preserve demo classroom
+    const isMock = student.id.startsWith("student-00") && parseInt(student.id.replace("student-", "")) <= 8;
+
+    if (highestPercent === 0 && isMock) {
       if (student.id === "student-001") { highestPercent = 100; rawScore = 6.0; }
       else if (student.id === "student-002") { highestPercent = 92; rawScore = 5.5; }
       else if (student.id === "student-003") { highestPercent = 100; rawScore = 6.0; }
@@ -171,7 +178,40 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
       else if (student.id === "student-006") { highestPercent = 84; rawScore = 5.0; }
       else if (student.id === "student-007") { highestPercent = 92; rawScore = 5.5; }
       else if (student.id === "student-008") { highestPercent = 80; rawScore = 4.8; }
-      else { highestPercent = 90; rawScore = 5.4; }
+    }
+
+    // กรณีผู้เรียนใหม่หรือผู้เรียนที่ยังไม่เคยส่งงานจริง: ได้เกรด "ร" (รอส่งงาน) ไม่ให้เกรด 4 ปลอม
+    if (!isMock && !hasAnyEvidence) {
+      return {
+        rawScore: 0,
+        maxScore: 6.0,
+        percentScore: 0,
+        letterGrade: "ร",
+        gradeLevel: "รอส่งชิ้นงาน (Pending)",
+        gradeBadgeColor: "bg-rose-50 text-rose-700 border-rose-200",
+        pathway: "⏳ รอส่งชิ้นงานเพื่อประเมินสมรรถนะ",
+        standardCode: "ว 4.2 ม.4/1",
+        isMastered: false,
+        evidenceCount: 0,
+        hasEvidence: false
+      };
+    }
+
+    // กรณีส่งงานแล้ว แต่อยู่ระหว่างรอคุณครูตรวจประเมิน
+    if (!isMock && hasAttemptEvidence && !hasReviewedEvidence) {
+      return {
+        rawScore: 0,
+        maxScore: 6.0,
+        percentScore: 0,
+        letterGrade: "รอตรวจ",
+        gradeLevel: "รอคุณครูตรวจประเมิน",
+        gradeBadgeColor: "bg-amber-50 text-amber-800 border-amber-300",
+        pathway: "📥 ส่งงานแล้ว อยู่ระหว่างรอตรวจ",
+        standardCode: "ว 4.2 ม.4/1",
+        isMastered: false,
+        evidenceCount: studentAttempts.length,
+        hasEvidence: true
+      };
     }
 
     let letterGrade = "4.0";
@@ -200,6 +240,8 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
       gradeBadgeColor = "bg-slate-50 text-slate-800 border-slate-300";
     }
 
+    const totalEvidence = studentAttempts.length + studentQuizzes.length;
+
     return {
       rawScore: Number(rawScore.toFixed(1)),
       maxScore: 6.0,
@@ -209,7 +251,9 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
       gradeBadgeColor,
       pathway,
       standardCode: "ว 4.2 ม.4/1",
-      isMastered: highestPercent >= 70
+      isMastered: highestPercent >= 70,
+      evidenceCount: isMock ? 3 : totalEvidence,
+      hasEvidence: true
     };
   };
 
@@ -219,16 +263,19 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
   }));
 
   const totalStudentsCount = gradeSummaries.length;
-  const masteredStudentsCount = gradeSummaries.filter(g => g.isMastered).length;
-  const masteryRatePct = totalStudentsCount > 0 ? Math.round((masteredStudentsCount / totalStudentsCount) * 100) : 100;
-  const classAvgScore = totalStudentsCount > 0 
-    ? (gradeSummaries.reduce((sum, g) => sum + g.rawScore, 0) / totalStudentsCount).toFixed(1)
+  const evaluatedSummaries = gradeSummaries.filter(g => g.letterGrade !== "ร" && g.letterGrade !== "รอตรวจ");
+  const totalEvaluatedCount = evaluatedSummaries.length;
+  const masteredStudentsCount = evaluatedSummaries.filter(g => g.isMastered).length;
+  const masteryRatePct = totalEvaluatedCount > 0 ? Math.round((masteredStudentsCount / totalEvaluatedCount) * 100) : 100;
+  const classAvgScore = totalEvaluatedCount > 0 
+    ? (evaluatedSummaries.reduce((sum, g) => sum + g.rawScore, 0) / totalEvaluatedCount).toFixed(1)
     : "5.6";
-  const classAvgPct = totalStudentsCount > 0
-    ? Math.round(gradeSummaries.reduce((sum, g) => sum + g.percentScore, 0) / totalStudentsCount)
+  const classAvgPct = totalEvaluatedCount > 0
+    ? Math.round(evaluatedSummaries.reduce((sum, g) => sum + g.percentScore, 0) / totalEvaluatedCount)
     : 93;
   const grade4Count = gradeSummaries.filter(g => g.letterGrade === "4.0").length;
   const grade35Count = gradeSummaries.filter(g => g.letterGrade === "3.5").length;
+  const pendingGradeCount = gradeSummaries.filter(g => g.letterGrade === "ร" || g.letterGrade === "รอตรวจ").length;
 
   // Filter gradebook students
   const filteredGradeSummaries = gradeSummaries.filter(g => {
@@ -239,6 +286,7 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
     if (gradebookFilter === "all") return true;
     if (gradebookFilter === "g4") return g.letterGrade === "4.0";
     if (gradebookFilter === "g35") return g.letterGrade === "3.5";
+    if (gradebookFilter === "pending") return g.letterGrade === "ร" || g.letterGrade === "รอตรวจ";
     if (gradebookFilter === "coder") return g.student.learnerProfile?.persona === "Hands-on Coder";
     if (gradebookFilter === "explainer") return g.student.learnerProfile?.persona === "Conceptual Explainer";
     if (gradebookFilter === "explorer") return g.student.learnerProfile?.persona === "Fast Explorer";
@@ -276,17 +324,17 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
       idx + 1,
       `"${g.student.id}"`,
       `"${g.student.name}"`,
-      `"${g.student.learnerProfile?.persona || 'Balanced'}"`,
+      `"${g.student.learnerProfile?.persona || 'รอวิเคราะห์ (ไม่มีร่องรอย)'}"`,
       `"${g.pathway.replace(/"/g, '""')}"`,
       `"${g.standardCode}"`,
       `"การออกแบบและเขียนโปรแกรมควบคุมแบบวนซ้ำ (Loops)"`,
       g.maxScore.toFixed(1),
-      g.rawScore.toFixed(1),
-      `${g.percentScore}%`,
+      g.letterGrade === "ร" || g.letterGrade === "รอตรวจ" ? '"-"' : g.rawScore.toFixed(1),
+      g.letterGrade === "ร" || g.letterGrade === "รอตรวจ" ? '"-"' : `${g.percentScore}%`,
       g.letterGrade,
       `"${g.gradeLevel}"`,
-      `"100% (3/3 งาน)"`,
-      `"${g.isMastered ? 'ผ่านเกณฑ์มาตรฐาน' : 'กำลังพัฒนา'}"`
+      g.letterGrade === "ร" ? '"0% (0/3 งาน)"' : g.letterGrade === "รอตรวจ" ? `"${g.evidenceCount}/3 งาน"` : `"${Math.min(100, Math.round((g.evidenceCount / 3) * 100))}% (${g.evidenceCount}/3 งาน)"`,
+      g.letterGrade === "ร" ? '"รอส่งชิ้นงาน"' : g.letterGrade === "รอตรวจ" ? '"รอคุณครูตรวจประเมิน"' : `"${g.isMastered ? 'ผ่านเกณฑ์มาตรฐาน' : 'กำลังพัฒนา'}"`
     ]);
 
     const csvContent = "\uFEFF" + [
@@ -958,7 +1006,10 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
                               <span>{student.learnerProfile.persona}</span>
                             </span>
                           ) : (
-                            <span className="text-slate-400 text-[11px]">—</span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10px] font-medium text-slate-500 bg-slate-50 border border-slate-200" title="ยังไม่มีร่องรอยการส่งงานจริงในระบบ">
+                              <span>⏳</span>
+                              <span>รอร่องรอยชิ้นงาน (0 ชิ้น)</span>
+                            </span>
                           )}
                         </td>
 
@@ -1268,6 +1319,17 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
               >
                 ✍️ สาย Explainer
               </button>
+              <button
+                type="button"
+                onClick={() => setGradebookFilter("pending")}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                  gradebookFilter === "pending"
+                    ? "bg-rose-600 text-white shadow-xs"
+                    : "bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200"
+                }`}
+              >
+                ⏳ รอส่ง/รอตรวจ ({pendingGradeCount})
+              </button>
             </div>
           </div>
 
@@ -1319,7 +1381,7 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
                                 <span>{item.student.name}</span>
                                 <span className="text-[10px] font-normal text-slate-500">({item.student.id})</span>
                               </div>
-                              {item.student.learnerProfile && (
+                              {item.student.learnerProfile ? (
                                 <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
                                   <span>
                                     {item.student.learnerProfile.persona === "Hands-on Coder" ? "💻" :
@@ -1328,6 +1390,11 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
                                      item.student.learnerProfile.persona === "Resilient Improver" ? "🔄" : "⚖️"}
                                   </span>
                                   <span>{item.student.learnerProfile.persona}</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200" title="ยังไม่มีร่องรอยการส่งงานจริง">
+                                  <span>⏳</span>
+                                  <span>รอร่องรอยชิ้นงาน (0 ชิ้น)</span>
                                 </span>
                               )}
                             </div>
@@ -1340,32 +1407,55 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
                             {item.pathway}
                           </div>
                           <div className="text-[11px] text-slate-500 mt-0.5">
-                            ประเมินผ่านเกณฑ์ 6 มิติ (Syntax/Logic/State/Loop Control)
+                            {item.letterGrade === "ร" ? "ยังไม่พบชิ้นงานส่งตรวจ (รอส่งภารกิจ)" : "ประเมินผ่านเกณฑ์ 6 มิติ (Syntax/Logic/State/Loop Control)"}
                           </div>
                         </td>
 
                         {/* Curriculum Standard */}
                         <td className="p-3.5 text-center">
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                            <CheckCircle2 size={12} className="text-emerald-600" />
-                            <span>ผ่านเกณฑ์ ว 4.2</span>
-                          </span>
+                          {item.isMastered ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              <CheckCircle2 size={12} className="text-emerald-600" />
+                              <span>ผ่านเกณฑ์ ว 4.2</span>
+                            </span>
+                          ) : item.letterGrade === "รอตรวจ" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                              <Clock size={12} className="text-amber-600" />
+                              <span>รอประเมิน ว 4.2</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                              <AlertCircle size={12} className="text-rose-500" />
+                              <span>รอส่งชิ้นงาน</span>
+                            </span>
+                          )}
                         </td>
 
                         {/* Standard Score */}
                         <td className="p-3.5 text-center">
-                          <div className="inline-flex flex-col items-center gap-1">
-                            <div className="font-black text-sm text-slate-900">
-                              {item.rawScore.toFixed(1)} <span className="text-[11px] font-normal text-slate-500">/ 6.0</span>
+                          {item.letterGrade === "ร" || item.letterGrade === "รอตรวจ" ? (
+                            <div className="inline-flex flex-col items-center gap-0.5">
+                              <div className="font-bold text-sm text-slate-400">
+                                - <span className="text-[11px] font-normal text-slate-400">/ 6.0</span>
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-medium">
+                                {item.letterGrade === "ร" ? "ยังไม่มีคะแนน" : "รอครูตรวจ"}
+                              </span>
                             </div>
-                            <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <div 
-                                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500" 
-                                style={{ width: `${item.percentScore}%` }} 
-                              />
+                          ) : (
+                            <div className="inline-flex flex-col items-center gap-1">
+                              <div className="font-black text-sm text-slate-900">
+                                {item.rawScore.toFixed(1)} <span className="text-[11px] font-normal text-slate-500">/ 6.0</span>
+                              </div>
+                              <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-500" 
+                                  style={{ width: `${item.percentScore}%` }} 
+                                />
+                              </div>
+                              <span className="text-[10px] font-semibold text-emerald-700">{item.percentScore}%</span>
                             </div>
-                            <span className="text-[10px] font-semibold text-emerald-700">{item.percentScore}%</span>
-                          </div>
+                          )}
                         </td>
 
                         {/* Letter Grade & Level */}
@@ -1383,12 +1473,34 @@ export const TeacherDashboard = ({ onOpenGrading }: { onOpenGrading: (id: string
                         {/* Triangulation Confidence */}
                         <td className="p-3.5 text-center">
                           <div className="inline-flex flex-col items-center">
-                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                              100% (3/3 งาน)
-                            </span>
-                            <span className="text-[10px] text-slate-400 mt-0.5">
-                              Triangulated
-                            </span>
+                            {item.letterGrade === "ร" ? (
+                              <>
+                                <span className="text-[11px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200">
+                                  0% (0/3 งาน)
+                                </span>
+                                <span className="text-[10px] text-slate-400 mt-0.5">
+                                  รอส่งชิ้นงาน
+                                </span>
+                              </>
+                            ) : item.letterGrade === "รอตรวจ" ? (
+                              <>
+                                <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                  {item.evidenceCount}/3 งาน
+                                </span>
+                                <span className="text-[10px] text-amber-600 mt-0.5">
+                                  รอตรวจให้คะแนน
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  {Math.min(100, Math.round((item.evidenceCount / 3) * 100))}% ({item.evidenceCount}/3 งาน)
+                                </span>
+                                <span className="text-[10px] text-slate-400 mt-0.5">
+                                  Triangulated
+                                </span>
+                              </>
+                            )}
                           </div>
                         </td>
 

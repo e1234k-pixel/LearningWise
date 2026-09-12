@@ -142,7 +142,7 @@ export const StudentDossierModal: React.FC<StudentDossierModalProps> = ({
           </div>
 
           {/* 🧠 ผลการวิเคราะห์สไตล์และความถนัดในการเรียนรู้ (Learner Persona & Behavioral Telemetry) */}
-          {student.learnerProfile && (
+          {student.learnerProfile ? (
             <div className="rounded-2xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/70 via-blue-50/40 to-slate-50 p-5 space-y-4 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-100 pb-3">
                 <div className="flex items-center gap-2.5">
@@ -263,6 +263,18 @@ export const StudentDossierModal: React.FC<StudentDossierModalProps> = ({
                   {student.learnerProfile.teacherRecommendation}
                 </p>
               </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-5 space-y-2 text-center">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-xl mx-auto">
+                ⏳
+              </div>
+              <h4 className="font-bold text-sm text-slate-800">
+                ยังไม่มีข้อมูล Learner Profile (รอร่องรอยการส่งงานจริง)
+              </h4>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                ระบบ LearnWise ไม่สร้างข้อมูลสมมติ ระบบจะวิเคราะห์สไตล์การเรียนรู้ (Persona), Modality Affinity และ Telemetry ให้อัตโนมัติทันทีที่นักเรียนคนนี้ส่งงานชิ้นแรก
+              </p>
             </div>
           )}
 

@@ -1,4 +1,4 @@
-import type { AuthUser, RoleType, Student, Envelope, LearnerProfile } from "../types";
+import type { AuthUser, RoleType, Student, Envelope, LearnerProfile, LearnerPersona } from "../types";
 
 /**
  * ตรวจสอบว่า ID เป็น UUID หรือรหัสที่ถูกเจนอัตโนมัติ (เช่น Supabase Auth UUID หรือ timestamp) หรือไม่
@@ -134,38 +134,145 @@ export function findMatchingUser(
 }
 
 /**
- * โพรไฟล์การเรียนรู้ตั้งต้นสำหรับนักเรียนใหม่ที่เข้ามาในห้องเรียนครูเมย์
+ * วิเคราะห์โพรไฟล์การเรียนรู้ (Learner Profile / Superpower) จากร่องรอยการทำงานจริงของผู้เรียน
+ * หากนักเรียนยังไม่มีร่องรอยการส่งงานจริง (0 ชิ้นงาน) จะคืนค่า undefined (ไม่สุ่มหรือจำลองข้อมูลเท็จ)
  */
-export const DEFAULT_NEW_STUDENT_PROFILE: LearnerProfile = {
-  persona: "Balanced Learner",
-  personaTitle: "สายสำรวจและพัฒนา (Adaptive Learner)",
-  tagline: "นักเรียนห้องครูเมย์ ชลธิชา พร้อมฝึกฝนและพัฒนาทักษะการคิดเชิงคำนวณอย่างเป็นระบบ",
-  affinityScores: { coding: 70, conceptual: 70, quiz: 75 },
-  telemetry: {
-    engagementSpeed: "เริ่มทันที (Fast)",
-    resilienceIndex: "มั่นคง (Steady)",
-    preferredModality: "เขียนโค้ด (Coding)"
-  },
-  teacherRecommendation: "ได้รับมอบหมายภารกิจจากครูเมย์เรียบร้อยแล้ว สามารถเริ่มทำแบบทดสอบ ข้อเขียน และเขียนโค้ดเพื่อส่งตรวจรับข้อเสนอแนะรายบุคคลได้ทันที"
-};
+export function computeRealLearnerProfile(
+  studentId: string,
+  envelope: Envelope
+): LearnerProfile | undefined {
+  // รวบรวมร่องรอยการทำงานจริงทั้งหมดของนักเรียน
+  const studentAttempts = (envelope.attempts || []).filter(a => a.studentId === studentId);
+  const studentQuizzes = (envelope.quizHistory || []).filter(q => q.studentId === studentId);
+  const studentReviews = (envelope.reviews || []).filter(r => 
+    studentAttempts.some(a => a.id === r.attemptId) && r.publicationStatus === "published"
+  );
+  const studentParticipations = (envelope.participations || []).filter(p => p.studentId === studentId);
+
+  const totalEvidenceCount = studentAttempts.length + studentQuizzes.length;
+  if (totalEvidenceCount === 0) {
+    // ยังไม่มีร่องรอยการทำงานจริง ไม่สร้างข้อมูลปลอม
+    return undefined;
+  }
+
+  // 1. วิเคราะห์ร่องรอยแยกตาม Modality (Coding, Conceptual/Short-Answer, Quiz)
+  const codingAttempts = studentAttempts.filter(a => a.type === "coding");
+  const saAttempts = studentAttempts.filter(a => a.type === "short-answer");
+  const quizEntries = studentQuizzes;
+
+  // Pulse rating sentiment analysis
+  const favoriteCoding = codingAttempts.some(a => a.pulseRating?.includes("สนุกและถนัด"));
+  const favoriteSa = saAttempts.some(a => a.pulseRating?.includes("สนุกและถนัด"));
+  const favoriteQuiz = quizEntries.some(q => q.pulseRating?.includes("สนุกและถนัด"));
+
+  // Check revisions (ความพยายามปรับปรุงงาน)
+  const hasRevision = studentAttempts.some(a => a.attemptNo > 1 || (a.revisionNote && a.revisionNote.trim().length > 0)) || quizEntries.some(q => q.attemptNo > 1);
+
+  // คำนวณ Affinity Scores (0 - 100) ตามหลักฐานจริง
+  let codingScore = 30 + (codingAttempts.length * 20) + (favoriteCoding ? 25 : 0);
+  let conceptualScore = 30 + (saAttempts.length * 20) + (favoriteSa ? 25 : 0);
+  let quizScore = 30 + (quizEntries.length * 20) + (favoriteQuiz ? 25 : 0);
+
+  // ปรับตามคะแนนชิ้นงานจริง
+  const highestQuizPct = quizEntries.reduce((max, q) => Math.max(max, q.percentScore || 0), 0);
+  if (highestQuizPct >= 80) quizScore += 20;
+
+  const highestReviewPct = studentReviews.reduce((max, r) => Math.max(max, r.percentScore || 0), 0);
+  if (highestReviewPct >= 80) {
+    if (codingAttempts.length > 0) codingScore += 15;
+    if (saAttempts.length > 0) conceptualScore += 15;
+  }
+
+  // Cap between 20 and 98
+  codingScore = Math.min(98, Math.max(25, codingScore));
+  conceptualScore = Math.min(98, Math.max(25, conceptualScore));
+  quizScore = Math.min(98, Math.max(25, quizScore));
+
+  // 2. กำหนด Persona จากจุดเด่นจริง
+  let persona: LearnerPersona = "Balanced Learner";
+  let personaTitle = "สายสำรวจรอบด้าน (Balanced Learner)";
+  let tagline = "มีสมรรถนะการเรียนรู้ที่สมดุลและปรับตัวเข้ากับรูปแบบโจทย์ได้อย่างยืดหยุ่น";
+  let teacherRecommendation = "ส่งเสริมให้ลองทำโจทย์ที่มีความซับซ้อนขึ้น และพัฒนาทักษะการคิดเชิงคำนวณในระดับสูง";
+
+  if (hasRevision && studentReviews.some(r => r.decision === "request_changes" || r.decision === "finalize")) {
+    persona = "Resilient Improver";
+    personaTitle = "สายมุ่งมั่นพัฒนา (Resilient Improver)";
+    tagline = "มี Grit สูงมาก สามารถนำ Feedback ของครูเมย์มาปรับปรุงแก้ไขคำตอบรอบที่สองจนเข้าใจกระจ่าง";
+    teacherRecommendation = "กล่าวชื่นชมในความไม่ยอมแพ้ และสนับสนุนให้ใช้กระบวนการคิดวิเคราะห์นี้กับโจทย์โปรแกรมมิ่งที่ยากขึ้น";
+  } else if (codingScore > conceptualScore && codingScore > quizScore) {
+    persona = "Hands-on Coder";
+    personaTitle = "สายสร้างสรรค์เชิงปฏิบัติ (Hands-on Coder)";
+    tagline = "ชอบการลงมือเขียนโค้ดและทดลองรันจริง มีความเข้าใจโครงสร้างคำสั่งผ่านการปฏิบัติการ";
+    teacherRecommendation = "ต่อยอดด้วยโจทย์โครงสร้างลูปซ้อนลูป (Nested Loops) หรือการนำลูปไปประยุกต์ร่วมกับโครงสร้างข้อมูล List";
+  } else if (conceptualScore > codingScore && conceptualScore > quizScore) {
+    persona = "Conceptual Explainer";
+    personaTitle = "สายวิเคราะห์มโนทัศน์ (Conceptual Explainer)";
+    tagline = "เข้าใจแก่นแท้ของขอบเขตลูป อธิบายเหตุและผลในการวนซ้ำได้อย่างชัดเจนเป็นขั้นเป็นตอน";
+    teacherRecommendation = "ส่งเสริมให้แปลงมโนทัศน์ที่เข้าใจเป็นโค้ดโปรแกรม และเป็นผู้นำในการอภิปรายตรรกะในห้องเรียน";
+  } else if (quizScore > codingScore && quizScore > conceptualScore) {
+    persona = "Fast Explorer";
+    personaTitle = "สายสำรวจตรรกะไว (Fast Explorer)";
+    tagline = "เรียนรู้และตอบสนองต่อแบบทดสอบได้อย่างรวดเร็ว มีทักษะการตรวจจับรูปแบบคำตอบที่เฉียบคม";
+    teacherRecommendation = "กระตุ้นให้อ่านโจทย์และไล่โค้ดอย่างรอบคอบ พร้อมลองลงมือเขียนคำอธิบายแนวคิดในข้อเขียนเพิ่มเติม";
+  }
+
+  // 3. วิเคราะห์ Telemetry
+  let engagementSpeed: "เริ่มทันที (Fast)" | "ปานกลาง (Medium)" | "ต้องกระตุ้น (Needs Push)" = "เริ่มทันที (Fast)";
+  if (studentParticipations.length === 0) {
+    engagementSpeed = "ปานกลาง (Medium)";
+  }
+
+  let resilienceIndex: "สูงมาก (High Grit)" | "มั่นคง (Steady)" | "ต้องการการชี้แนะ (Needs Support)" = "มั่นคง (Steady)";
+  if (hasRevision || totalEvidenceCount >= 2) {
+    resilienceIndex = "สูงมาก (High Grit)";
+  }
+
+  let preferredModality: "เขียนโค้ด (Coding)" | "อธิบายแนวคิด (Short Answer)" | "ทำแบบทดสอบสั้น (Quiz)" = "เขียนโค้ด (Coding)";
+  if (quizScore >= codingScore && quizScore >= conceptualScore) {
+    preferredModality = "ทำแบบทดสอบสั้น (Quiz)";
+  } else if (conceptualScore >= codingScore) {
+    preferredModality = "อธิบายแนวคิด (Short Answer)";
+  }
+
+  return {
+    persona,
+    personaTitle,
+    tagline,
+    affinityScores: {
+      coding: codingScore,
+      conceptual: conceptualScore,
+      quiz: quizScore
+    },
+    telemetry: {
+      engagementSpeed,
+      resilienceIndex,
+      preferredModality
+    },
+    teacherRecommendation
+  };
+}
 
 /**
  * บรรจุนักเรียนใหม่เข้าเป็นนักเรียนห้องครูเมย์ (Teacher May - teacher-demo)
  * และมอบหมายภารกิจทั้งหมดของครูเมย์ให้นักเรียนทำส่งได้ทันที
+ * (learnerProfile จะยังคงเป็น undefined จนกว่านักเรียนจะส่งงานชิ้นแรก)
  */
 export function enrollStudentInTeacherMayClass(
   envelope: Envelope,
   student: Student
 ): Envelope {
+  // คำนวณ learnerProfile จากร่องรอยจริง (หากยังไม่เคยส่งงาน จะได้ undefined)
+  const realProfile = student.learnerProfile || computeRealLearnerProfile(student.id, envelope);
+
   const studentWithProfile: Student = {
     ...student,
-    learnerProfile: student.learnerProfile || DEFAULT_NEW_STUDENT_PROFILE
+    learnerProfile: realProfile
   };
 
   // 1. เพิ่มหรืออัปเดตนักเรียนในรายการ students
   const studentExists = envelope.students.some(s => s.id === student.id);
   const nextStudents = studentExists
-    ? envelope.students.map(s => s.id === student.id ? { ...studentWithProfile, learnerProfile: s.learnerProfile || DEFAULT_NEW_STUDENT_PROFILE } : s)
+    ? envelope.students.map(s => s.id === student.id ? { ...studentWithProfile, learnerProfile: realProfile } : s)
     : [...envelope.students, studentWithProfile];
 
   // 2. มอบหมายภารกิจของครูเมย์ทั้งหมดให้นักเรียนมีสิทธิ์ทำและส่งได้ทันที
@@ -190,6 +297,7 @@ export function enrollStudentInTeacherMayClass(
 /**
  * ตรวจสอบและซิงก์นักเรียนทุกคนในระบบ (โดยเฉพาะผู้ที่ Login ด้วย Google หรือสร้างใหม่)
  * ให้เข้าสังกัดห้องครูเมย์และได้รับมอบหมายงานของครูเมย์ครบถ้วนพร้อมส่งตรวจ
+ * พร้อมปรับ learnerProfile ให้สอดคล้องกับร่องรอยการทำงานจริง (ไม่มีการตั้งค่าหลอก)
  */
 export function ensureTeacherMayClassEnrollment(
   envelope: Envelope,
@@ -199,9 +307,13 @@ export function ensureTeacherMayClassEnrollment(
   
   // นำนักเรียนเดิมใน envelope เข้า map
   envelope.students.forEach(s => {
+    // ตรวจสอบว่าเป็น mock student 001 - 008 หรือไม่
+    const isMock = s.id.startsWith("student-00") && parseInt(s.id.replace("student-", "")) <= 8;
+    const realProfile = isMock ? s.learnerProfile : computeRealLearnerProfile(s.id, envelope);
+
     studentMap.set(s.id, {
       ...s,
-      learnerProfile: s.learnerProfile || DEFAULT_NEW_STUDENT_PROFILE
+      learnerProfile: realProfile
     });
   });
 
@@ -214,7 +326,7 @@ export function ensureTeacherMayClassEnrollment(
           name: u.name,
           schoolId: u.schoolId,
           email: u.email,
-          learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
+          learnerProfile: computeRealLearnerProfile(u.id, envelope)
         });
       }
     });

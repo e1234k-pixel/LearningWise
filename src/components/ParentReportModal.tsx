@@ -59,11 +59,12 @@ export const ParentReportModal: React.FC<ParentReportModalProps> = ({
   };
 
   // Resolve scores & grade
-  const score = gradeSummary?.rawScore ?? 5.8;
+  const score = gradeSummary?.rawScore ?? 0;
   const maxScore = gradeSummary?.maxScore ?? 6.0;
-  const letterGrade = gradeSummary?.letterGrade ?? "4.0";
-  const gradeLevel = gradeSummary?.gradeLevel ?? "ดีเยี่ยม (Mastered)";
+  const letterGrade = gradeSummary?.letterGrade ?? (profile ? "4.0" : "ร");
+  const gradeLevel = gradeSummary?.gradeLevel ?? (profile ? "ดีเยี่ยม (Mastered)" : "รอส่งชิ้นงาน (Pending)");
   const pathway = gradeSummary?.pathway ?? (
+    !profile ? "⏳ รอส่งชิ้นงานเพื่อประเมินสมรรถนะ" :
     persona === "Hands-on Coder" ? "เขียนโปรแกรมแก้ปัญหาจริง (Coding Challenge)" :
     persona === "Conceptual Explainer" ? "วิเคราะห์ผังงานและอธิบายมโนทัศน์ (Conceptual Short-Answer)" :
     "แบบทดสอบตรรกะเชิงลึก (Logic Mastery Quiz)"
@@ -71,6 +72,16 @@ export const ParentReportModal: React.FC<ParentReportModalProps> = ({
 
   // Persona narratives tailored for parents
   const getParentNarrative = () => {
+    if (!profile) {
+      return {
+        title: "รอวิเคราะห์จากร่องรอยการทำงานจริง (Pending Evidence)",
+        emoji: "⏳",
+        badgeColor: "bg-slate-100 text-slate-700 border-slate-200",
+        desc: "นักเรียนเพิ่งเข้าสู่ระบบหรืออยู่ระหว่างเริ่มทำภารกิจ ระบบ LearnWise จะไม่สร้างข้อมูลสมมติขึ้นมา แต่จะเริ่มวิเคราะห์สไตล์การเรียนรู้ (Persona) และจุดแข็งเฉพาะบุคคลโดยอัตโนมัติเมื่อนักเรียนส่งชิ้นงานชิ้นแรกเสร็จสิ้น",
+        homeTip: "สนับสนุนและให้กำลังใจให้นักเรียนเริ่มลงมือทำภารกิจแรกในระบบ LearnWise ไม่ว่าจะเป็นการเขียนโค้ด การอธิบายแนวคิด หรือการทำแบบทดสอบ เพื่อให้ระบบสามารถวิเคราะห์จุดเด่นของน้องได้อย่างแม่นยำ"
+      };
+    }
+
     switch (persona) {
       case "Hands-on Coder":
         return {
@@ -336,12 +347,26 @@ export const ParentReportModal: React.FC<ParentReportModalProps> = ({
               </div>
 
               {/* Grade Callout */}
-              <div className="bg-gradient-to-b from-emerald-50 to-teal-50/50 border border-emerald-200 rounded-xl p-4 flex flex-col items-center justify-center text-center">
-                <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">ระดับผลการเรียน</span>
-                <span className="text-3xl font-black text-emerald-600 my-1">เกรด {letterGrade}</span>
-                <span className="text-xs font-bold text-emerald-900">{gradeLevel}</span>
-                <span className="text-[11px] text-emerald-700 mt-1 font-mono">
-                  คะแนนที่ได้: {score.toFixed(1)} / {maxScore.toFixed(1)}
+              <div className={`border rounded-xl p-4 flex flex-col items-center justify-center text-center ${
+                letterGrade === "ร"
+                  ? "bg-rose-50/80 border-rose-200"
+                  : letterGrade === "รอตรวจ"
+                  ? "bg-amber-50/80 border-amber-200"
+                  : "bg-gradient-to-b from-emerald-50 to-teal-50/50 border-emerald-200"
+              }`}>
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${
+                  letterGrade === "ร" ? "text-rose-800" : letterGrade === "รอตรวจ" ? "text-amber-800" : "text-emerald-800"
+                }`}>ระดับผลการเรียน</span>
+                <span className={`text-3xl font-black my-1 ${
+                  letterGrade === "ร" ? "text-rose-600" : letterGrade === "รอตรวจ" ? "text-amber-600" : "text-emerald-600"
+                }`}>เกรด {letterGrade}</span>
+                <span className={`text-xs font-bold ${
+                  letterGrade === "ร" ? "text-rose-900" : letterGrade === "รอตรวจ" ? "text-amber-900" : "text-emerald-900"
+                }`}>{gradeLevel}</span>
+                <span className={`text-[11px] mt-1 font-mono ${
+                  letterGrade === "ร" ? "text-rose-600" : letterGrade === "รอตรวจ" ? "text-amber-700" : "text-emerald-700"
+                }`}>
+                  {letterGrade === "ร" ? "ยังไม่มีคะแนน (รอส่งชิ้นงาน)" : letterGrade === "รอตรวจ" ? "ส่งงานแล้ว รอครูตรวจ" : `คะแนนที่ได้: ${score.toFixed(1)} / ${maxScore.toFixed(1)}`}
                 </span>
               </div>
             </div>

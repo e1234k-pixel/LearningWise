@@ -190,7 +190,7 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
       </div>
 
       {/* 🌟 My Learning Superpower & Persona Card */}
-      {currentStudent?.learnerProfile && (
+      {currentStudent?.learnerProfile ? (
         <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-950 text-white rounded-2xl p-5 sm:p-6 border border-indigo-500/30 shadow-md relative overflow-hidden">
           <div className="absolute top-0 right-0 -mt-6 -mr-6 w-48 h-48 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
           
@@ -299,6 +299,46 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
             >
               <UserCheck size={14} className="text-indigo-600" />
               <span>พิมพ์ใบรายงานผู้ปกครอง (Parent Report)</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-50 to-indigo-50 border border-indigo-100 flex items-center justify-center text-3xl shrink-0 shadow-2xs">
+                ⏳
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5">
+                    <Sparkles size={13} className="text-indigo-600" />
+                    <span>My Learning Superpower • สไตล์การเรียนรู้เฉพาะบุคคล</span>
+                  </span>
+                  <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                    รอร่องรอยชิ้นงานจริง (0 ชิ้น)
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 pt-1">
+                  ระบบจะเริ่มวิเคราะห์ Superpower และ Modality ทันทีที่คุณส่งงานชิ้นแรก!
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
+                  เพื่อความเที่ยงตรงและสะท้อนศักยภาพที่แท้จริง ระบบ LearnWise จะไม่สร้างข้อมูลจำลองขึ้นมาลอยๆ 
+                  เมื่อคุณเริ่มลงมือทำภารกิจด้านล่าง (เช่น เขียนโค้ด Python, อธิบายมโนทัศน์ หรือทดสอบตรรกะ) 
+                  ระบบจะตรวจจับพฤติกรรม วิเคราะห์รูปแบบการเรียนรู้ และปลดล็อกมาตรวัดความถนัดของคุณโดยอัตโนมัติ
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                window.scrollTo({ top: 480, behavior: "smooth" });
+              }}
+              className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
+            >
+              <span>เริ่มทำภารกิจแรก</span>
+              <ArrowRight size={15} />
             </button>
           </div>
         </div>

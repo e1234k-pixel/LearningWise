@@ -53,7 +53,7 @@ import {
 import {
   enrollStudentInTeacherMayClass,
   ensureTeacherMayClassEnrollment,
-  DEFAULT_NEW_STUDENT_PROFILE
+  computeRealLearnerProfile
 } from "../utils/userUtils";
 
 interface AppContextType {
@@ -318,7 +318,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               name: targetUser.name,
               schoolId: targetUser.schoolId,
               email: targetUser.email,
-              learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
+              learnerProfile: undefined
             };
             setEnvelope(prev => {
               const nextEnv = enrollStudentInTeacherMayClass(prev, newStudent);
@@ -348,7 +348,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               name: targetUser.name,
               schoolId: targetUser.schoolId,
               email: targetUser.email,
-              learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
+              learnerProfile: undefined
             };
             setEnvelope(prev => {
               const nextEnv = enrollStudentInTeacherMayClass(prev, studentObj);
@@ -578,7 +578,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           name: targetUser.name,
           schoolId: targetUser.schoolId,
           email: targetUser.email,
-          learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
+          learnerProfile: undefined
         };
         setEnvelope(prev => {
           const nextEnv = enrollStudentInTeacherMayClass(prev, studentObj);
@@ -606,7 +606,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           name: targetUser.name,
           schoolId: targetUser.schoolId,
           email: targetUser.email,
-          learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
+          learnerProfile: undefined
         };
         setEnvelope(prev => {
           const nextEnv = enrollStudentInTeacherMayClass(prev, studentObj);
@@ -722,7 +722,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         name: created.name,
         schoolId: created.schoolId,
         email: created.email,
-        learnerProfile: DEFAULT_NEW_STUDENT_PROFILE
+        learnerProfile: undefined
       };
       setEnvelope(prev => {
         const nextEnv = enrollStudentInTeacherMayClass(prev, newStudent);
@@ -831,6 +831,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       (d) => !(d.studentId === draft.studentId && d.missionId === draft.missionId)
     );
     
+    // Recompute real learner profile from actual submitted work traces
+    const realProfile = computeRealLearnerProfile(draft.studentId, newEnvelope);
+    newEnvelope.students = newEnvelope.students.map(s => 
+      s.id === draft.studentId ? { ...s, learnerProfile: realProfile } : s
+    );
+
     updateEnvelope(newEnvelope);
     // Cloud push in background (silent fallback if offline)
     pushAttemptToCloud(newAttempt).catch(() => {});
@@ -883,6 +889,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       });
     }
 
+    // Recompute real learner profile from actual submitted work traces
+    const realProfile = computeRealLearnerProfile(studentId, newEnvelope);
+    newEnvelope.students = newEnvelope.students.map(s => 
+      s.id === studentId ? { ...s, learnerProfile: realProfile } : s
+    );
+
     updateEnvelope(newEnvelope);
     // Cloud push in background (silent fallback if offline)
     pushQuizHistoryToCloud(historyEntry).catch(() => {});
@@ -907,6 +919,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       publishedAt: new Date().toISOString(),
     };
     newEnvelope.reviews.push(newReview);
+
+    const targetAttempt = newEnvelope.attempts.find(a => a.id === attemptId);
+    if (targetAttempt) {
+      const realProfile = computeRealLearnerProfile(targetAttempt.studentId, newEnvelope);
+      newEnvelope.students = newEnvelope.students.map(s => 
+        s.id === targetAttempt.studentId ? { ...s, learnerProfile: realProfile } : s
+      );
+    }
+
     updateEnvelope(newEnvelope);
   };
 
@@ -946,6 +967,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       publishedAt: new Date().toISOString(),
     };
     newEnvelope.reviews.push(newReview);
+
+    // Recompute real learner profile from actual submitted & evaluated work traces
+    const realProfile = computeRealLearnerProfile(attempt.studentId, newEnvelope);
+    newEnvelope.students = newEnvelope.students.map(s => 
+      s.id === attempt.studentId ? { ...s, learnerProfile: realProfile } : s
+    );
+
     updateEnvelope(newEnvelope);
     // Cloud push in background (silent fallback if offline)
     pushReviewToCloud(newReview).catch(() => {});
