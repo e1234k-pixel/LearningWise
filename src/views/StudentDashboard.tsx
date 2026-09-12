@@ -13,7 +13,10 @@ import {
   Hourglass,
   GraduationCap,
   FileCheck,
-  UserCheck
+  UserCheck,
+  Check,
+  Target,
+  Zap
 } from "lucide-react";
 import type { WorkStatus, Mission } from "../types";
 import { BeforeAfterModal } from "../components/BeforeAfterModal";
@@ -43,6 +46,23 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
     if (s === "changes-requested") countChanges++;
     if (s === "reviewed") countReviewed++;
   });
+
+  const quizMission = myMissions.find(m => m.type === "quiz");
+  const saMission = myMissions.find(m => m.type === "short-answer");
+  const codeMission = myMissions.find(m => m.type === "coding");
+
+  const studentAttempts = envelope.attempts.filter(a => a.studentId === role.id);
+  const studentQuizzes = envelope.quizHistory.filter(q => q.studentId === role.id);
+
+  const hasQuizDone = studentQuizzes.length > 0;
+  const hasSaDone = studentAttempts.some(a => a.type === "short-answer");
+  const hasCodeDone = studentAttempts.some(a => a.type === "coding");
+
+  let triangulationCount = 0;
+  if (hasQuizDone) triangulationCount++;
+  if (hasSaDone) triangulationCount++;
+  if (hasCodeDone) triangulationCount++;
+  const triangulationPct = Math.round((triangulationCount / 3) * 100);
 
   const StatusBadge = ({ status }: { status: WorkStatus }) => {
     switch (status) {
@@ -303,43 +323,185 @@ export const StudentDashboard = ({ onOpenMission }: { onOpenMission: (id: string
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm relative overflow-hidden">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-50 to-indigo-50 border border-indigo-100 flex items-center justify-center text-3xl shrink-0 shadow-2xs">
+        <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-sm relative overflow-hidden space-y-6">
+          {/* Top Header & Triangulation Meter */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+            <div className="flex items-start gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-50 to-indigo-50 border border-indigo-100 flex items-center justify-center text-2xl shrink-0 shadow-2xs">
                 ⏳
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5">
+                  <span className="px-3 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5">
                     <Sparkles size={13} className="text-indigo-600" />
                     <span>My Learning Superpower • สไตล์การเรียนรู้เฉพาะบุคคล</span>
                   </span>
                   <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                    รอร่องรอยชิ้นงานจริง (0 ชิ้น)
+                    รอร่องรอยชิ้นงานจริง ({triangulationCount}/3 เส้าหลักฐาน)
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 pt-1">
-                  ระบบจะเริ่มวิเคราะห์ Superpower และ Modality ทันทีที่คุณส่งงานชิ้นแรก!
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 pt-0.5">
+                  กลไกการค้นพบศักยภาพด้วยการสอบทาน 3 เส้า (Triangulation of Evidence)
                 </h3>
                 <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">
-                  เพื่อความเที่ยงตรงและสะท้อนศักยภาพที่แท้จริง ระบบ LearnWise จะไม่สร้างข้อมูลจำลองขึ้นมาลอยๆ 
-                  เมื่อคุณเริ่มลงมือทำภารกิจด้านล่าง (เช่น เขียนโค้ด Python, อธิบายมโนทัศน์ หรือทดสอบตรรกะ) 
-                  ระบบจะตรวจจับพฤติกรรม วิเคราะห์รูปแบบการเรียนรู้ และปลดล็อกมาตรวัดความถนัดของคุณโดยอัตโนมัติ
+                  ระบบ LearnWise จะไม่สร้างข้อมูลจำลองขึ้นมาเอง แต่จะ Calibrate พฤติกรรมจริงจาก 3 ภารกิจแรกของภาคเรียน 
+                  เพื่อให้ได้หลักฐานสามเส้าที่สมบูรณ์ สะท้อนจุดแข็งและความถนัดเฉพาะตัวของคุณอย่างแม่นยำและยุติธรรม
                 </p>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                window.scrollTo({ top: 480, behavior: "smooth" });
-              }}
-              className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs shadow-sm hover:shadow-md transition-all cursor-pointer"
-            >
-              <span>เริ่มทำภารกิจแรก</span>
-              <ArrowRight size={15} />
-            </button>
+            {/* Triangulation Confidence Meter */}
+            <div className="shrink-0 bg-slate-50 rounded-2xl p-3 border border-slate-200 text-center min-w-[150px]">
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">TRIANGULATION CALIBRATION</div>
+              <div className="text-xl font-black text-indigo-700 mt-0.5">{triangulationPct}%</div>
+              <div className="text-[10px] text-slate-500 mt-0.5 font-medium">สำเร็จ {triangulationCount} ใน 3 เส้า</div>
+            </div>
+          </div>
+
+          {/* 3 Pillars Grid */}
+          <div>
+            <div className="text-xs font-bold text-slate-700 mb-3 flex flex-wrap items-center justify-between gap-2">
+              <span>3 เส้าของหลักฐานที่ใช้ในการ Calibrate สไตล์การเรียนรู้:</span>
+              <span className="text-[11px] text-slate-400 font-normal">เลือกเริ่มทำภารกิจใดก่อนก็ได้ตามความถนัด (UDL Principle)</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              {/* Pillar 1: Quiz */}
+              <div className={`p-4 rounded-2xl border transition-all ${
+                hasQuizDone 
+                  ? "bg-emerald-50/50 border-emerald-200 shadow-2xs" 
+                  : "bg-gradient-to-br from-slate-50 to-purple-50/30 border-purple-200/70 hover:border-purple-300"
+              }`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-base font-bold shrink-0">
+                    🎯
+                  </div>
+                  {hasQuizDone ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <Check size={12} /> ส่งแล้ว
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-purple-700 bg-purple-100/80 px-2 py-0.5 rounded-full border border-purple-200">
+                      เส้าที่ 1 (Quiz)
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-bold text-xs text-slate-900 mt-2.5">
+                  1. แบบทดสอบตรรกะไว (Quiz)
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  ทดสอบความเข้าใจลูป 3 ข้อ วัดความเร็วการตอบสนอง (Fast Explorer) และการจำแนกคำตอบ
+                </p>
+                {quizMission && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenMission(quizMission.id)}
+                    className="mt-3 w-full py-1.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>{hasQuizDone ? "ดูผล / ทำซ้ำ" : "เริ่มทำแบบทดสอบ"}</span>
+                    <ArrowRight size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Pillar 2: Short Answer */}
+              <div className={`p-4 rounded-2xl border transition-all ${
+                hasSaDone 
+                  ? "bg-emerald-50/50 border-emerald-200 shadow-2xs" 
+                  : "bg-gradient-to-br from-slate-50 to-blue-50/30 border-blue-200/70 hover:border-blue-300"
+              }`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-base font-bold shrink-0">
+                    ✍️
+                  </div>
+                  {hasSaDone ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <Check size={12} /> ส่งแล้ว
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full border border-blue-200">
+                      เส้าที่ 2 (Concept)
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-bold text-xs text-slate-900 mt-2.5">
+                  2. อธิบายมโนทัศน์ (Short-Answer)
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  เขียนอธิบายเหตุผลและขอบเขตของลูป วัดความเข้าใจเชิงลึก (Conceptual Explainer) และการสื่อสารตรรกะ
+                </p>
+                {saMission && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenMission(saMission.id)}
+                    className="mt-3 w-full py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>{hasSaDone ? "ดูชิ้นงานที่ส่ง" : "เริ่มเขียนอธิบาย"}</span>
+                    <ArrowRight size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* Pillar 3: Coding */}
+              <div className={`p-4 rounded-2xl border transition-all ${
+                hasCodeDone 
+                  ? "bg-emerald-50/50 border-emerald-200 shadow-2xs" 
+                  : "bg-gradient-to-br from-slate-50 to-indigo-50/30 border-indigo-200/70 hover:border-indigo-300"
+              }`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-base font-bold shrink-0">
+                    💻
+                  </div>
+                  {hasCodeDone ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <Check size={12} /> ส่งแล้ว
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-full border border-indigo-200">
+                      เส้าที่ 3 (Coding)
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-bold text-xs text-slate-900 mt-2.5">
+                  3. เขียนโค้ดปฏิบัติจริง (Coding)
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                  ลงมือเขียนโปรแกรมลูป Python และรันผลจริง วัดทักษะปฏิบัติ (Hands-on Coder) และการ Debug
+                </p>
+                {codeMission && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenMission(codeMission.id)}
+                    className="mt-3 w-full py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>{hasCodeDone ? "ดูชิ้นงานที่ส่ง" : "เริ่มเขียนโค้ด"}</span>
+                    <ArrowRight size={13} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Guide on How AI Calibrates */}
+          <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200 text-xs space-y-2">
+            <div className="font-bold text-slate-900 flex items-center gap-2">
+              <Sparkles size={14} className="text-amber-500" />
+              <span>เคล็ดลับสำหรับนักเรียนใหม่: AI สังเกตพฤติกรรมอะไรบ้างเพื่อค้นหา Superpower?</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-slate-600 text-[11px]">
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-800">1. ความเร็วและสไตล์ที่เริ่มก่อน</span>
+                <p>AI ดูว่าคุณเลือกเริ่มทำภารกิจแบบไหนก่อน และตอบสนองต่อคำถามได้รวดเร็วเพียงใด</p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-800">2. การกด Pulse สะท้อนความรู้สึก</span>
+                <p>หลังส่งงาน กด 1 คลิกบอกความรู้สึก (เช่น "สนุกและถนัดมาก") เพื่อเพิ่มน้ำหนักให้รูปแบบนั้น</p>
+              </div>
+              <div className="space-y-0.5">
+                <span className="font-bold text-slate-800">3. ความมุ่งมั่นพัฒนา (Grit)</span>
+                <p>หากครูส่งคำแนะนำกลับมา ให้ลองปรับแก้งานรอบ 2 AI จะปลดล็อกดัชนี High Grit ทันที</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
