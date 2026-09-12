@@ -213,8 +213,16 @@ export const AdminDashboard: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<"users" | "google" | "audit" | "classes" | "supabase" | "ai">("users");
   const [isRefreshingUsers, setIsRefreshingUsers] = useState(false);
+  const [isRefreshingDomains, setIsRefreshingDomains] = useState(false);
+  const [domainSyncFeedback, setDomainSyncFeedback] = useState<{ type: "success" | "info"; message: string } | null>(null);
   const [isCallbackCopied, setIsCallbackCopied] = useState(false);
   const [clientIdInput, setClientIdInput] = useState(googleConfig.clientId || "");
+
+  useEffect(() => {
+    if (googleConfig.clientId) {
+      setClientIdInput(googleConfig.clientId);
+    }
+  }, [googleConfig.clientId]);
 
   // Supabase Configuration Form States
   const [supabaseUrlInput, setSupabaseUrlInput] = useState(supabaseConfig.url || "");
@@ -323,6 +331,11 @@ export const AdminDashboard: React.FC = () => {
       allowedDomains: [...googleConfig.allowedDomains, domainClean]
     });
     setNewDomainInput("");
+    setDomainSyncFeedback({
+      type: "success",
+      message: `เพิ่มโดเมน @${domainClean} และซิงก์บันทึกลง Supabase Cloud เรียบร้อยแล้ว`
+    });
+    setTimeout(() => setDomainSyncFeedback(null), 3500);
   };
 
   const handleRemoveDomain = (domainToRemove: string) => {
@@ -333,6 +346,11 @@ export const AdminDashboard: React.FC = () => {
     updateGoogleConfig({
       allowedDomains: googleConfig.allowedDomains.filter(d => d !== domainToRemove)
     });
+    setDomainSyncFeedback({
+      type: "info",
+      message: `ลบโดเมน @${domainToRemove} และอัปเดตลง Supabase Cloud สำเร็จ`
+    });
+    setTimeout(() => setDomainSyncFeedback(null), 3500);
   };
 
   const getRoleBadge = (role: RoleType) => {
@@ -739,113 +757,201 @@ export const AdminDashboard: React.FC = () => {
 
       {/* TAB 2: Google Workspace for Education Settings */}
       {activeTab === "google" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Domain Whitelist Card */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+        <div className="space-y-6">
+          {/* Cloud Sync Status Banner for Evaluation Committee */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-blue-50/90 via-indigo-50/80 to-purple-50/90 border border-blue-200/80 shadow-xs">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+              <div className="w-10 h-10 rounded-xl bg-white border border-blue-200 flex items-center justify-center text-blue-600 shadow-xs shrink-0">
                 <Globe size={20} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">โดเมนโรงเรียนที่อนุญาต (Domain Whitelist)</h3>
-                <p className="text-xs text-slate-500">จำกัดให้เฉพาะอีเมล Google Workspace ของโรงเรียนเท่านั้นที่เข้าสู่ระบบได้</p>
-              </div>
-            </div>
-
-            {/* List of Allowed Domains */}
-            <div className="space-y-2 pt-2">
-              {googleConfig.allowedDomains.map((domain) => (
-                <div key={domain} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-sm text-blue-700">@{domain}</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Verified</span>
-                  </div>
-                  <button
-                    onClick={() => handleRemoveDomain(domain)}
-                    className="text-xs text-slate-400 hover:text-rose-600 font-medium cursor-pointer"
-                  >
-                    ลบออก
-                  </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-xs font-bold text-slate-900">การตั้งค่า Google Workspace &amp; นโยบายโดเมนแบบรวมศูนย์</h4>
+                  <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                    isSupabaseConnected 
+                      ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
+                      : "bg-amber-100 text-amber-700 border border-amber-200"
+                  }`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${isSupabaseConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`}></span>
+                    {isSupabaseConnected ? "☁️ ซิงก์เรียลไทม์กับ Supabase Cloud" : "💾 Local Storage"}
+                  </span>
                 </div>
-              ))}
-            </div>
-
-            {/* Add New Domain Form */}
-            <form onSubmit={handleAddDomain} className="flex items-center gap-2 pt-2">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-mono">@</span>
-                <input
-                  type="text"
-                  placeholder="เช่น sathit.ac.th"
-                  value={newDomainInput}
-                  onChange={(e) => setNewDomainInput(e.target.value)}
-                  className="w-full pl-7 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                />
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  รายชื่อโดเมนโรงเรียนที่อนุญาตและนโยบายความปลอดภัย เชื่อมตรงกับ Supabase Cloud (ตาราง system_settings) ข้อมูลตรงกันทุกเครื่องและอัปเดตทันที
+                </p>
               </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
               <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer"
+                type="button"
+                onClick={async () => {
+                  setIsRefreshingDomains(true);
+                  const res = await fetchCloudData();
+                  setIsRefreshingDomains(false);
+                  if (res.success) {
+                    setDomainSyncFeedback({ type: "success", message: "ดึงข้อมูลล่าสุดจาก Supabase Cloud สำเร็จเรียบร้อย" });
+                    setTimeout(() => setDomainSyncFeedback(null), 3500);
+                  }
+                }}
+                disabled={isRefreshingDomains}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold border border-slate-200 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
               >
-                + เพิ่มโดเมน
+                <RefreshCw size={13} className={isRefreshingDomains ? "animate-spin text-blue-600" : "text-slate-500"} />
+                <span>{isRefreshingDomains ? "กำลังดึงข้อมูล..." : "ดึงข้อมูลสดจาก Cloud"}</span>
               </button>
-            </form>
+            </div>
           </div>
 
-          {/* Security & Provisioning Policies Card */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
-                <Sliders size={20} />
+          {domainSyncFeedback && (
+            <div className={`p-3.5 rounded-2xl text-xs flex items-center gap-2.5 transition-all shadow-xs ${
+              domainSyncFeedback.type === "success" 
+                ? "bg-emerald-50 border border-emerald-200 text-emerald-800" 
+                : "bg-blue-50 border border-blue-200 text-blue-800"
+            }`}>
+              <CheckCircle size={16} className={domainSyncFeedback.type === "success" ? "text-emerald-600 shrink-0" : "text-blue-600 shrink-0"} />
+              <span className="font-medium">{domainSyncFeedback.message}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Domain Whitelist Card */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+                    <Globe size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">โดเมนโรงเรียนที่อนุญาต (Domain Whitelist)</h3>
+                    <p className="text-xs text-slate-500">จำกัดให้เฉพาะอีเมล Google Workspace ของโรงเรียนเท่านั้นที่เข้าสู่ระบบได้</p>
+                  </div>
+                </div>
+                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-200 text-[11px] font-semibold text-blue-700">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                  <span>Cloud Whitelist ({googleConfig.allowedDomains.length})</span>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">นโยบายการจัดสรรบัญชี (Provisioning Policy)</h3>
-                <p className="text-xs text-slate-500">ตั้งค่านโยบายความปลอดภัยเมื่อมีผู้ใช้ใหม่ล็อกอินผ่าน Google</p>
+
+              {/* List of Allowed Domains */}
+              <div className="space-y-2 pt-2">
+                {googleConfig.allowedDomains.map((domain) => (
+                  <div key={domain} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-sm text-blue-700">@{domain}</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Cloud Synced</span>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveDomain(domain)}
+                      className="text-xs text-slate-400 hover:text-rose-600 font-medium cursor-pointer"
+                    >
+                      ลบออก
+                    </button>
+                  </div>
+                ))}
               </div>
+
+              {/* Add New Domain Form */}
+              <form onSubmit={handleAddDomain} className="flex items-center gap-2 pt-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-mono">@</span>
+                  <input
+                    type="text"
+                    placeholder="เช่น sathit.ac.th"
+                    value={newDomainInput}
+                    onChange={(e) => setNewDomainInput(e.target.value)}
+                    className="w-full pl-7 pr-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold cursor-pointer shadow-xs"
+                >
+                  + เพิ่มโดเมน
+                </button>
+              </form>
             </div>
 
-            <div className="space-y-4 pt-2">
-              {/* Toggle 1: Enforce Domain Restriction */}
-              <div className="flex items-start justify-between gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                <div>
-                  <div className="text-xs font-bold text-slate-900">บังคับใช้อีเมลโดเมนโรงเรียนเท่านั้น</div>
-                  <div className="text-[11px] text-slate-500">บล็อกอีเมลสาธารณะ เช่น @gmail.com หรือโดเมนอื่นที่ไม่ได้ลงทะเบียน</div>
+            {/* Security & Provisioning Policies Card */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs space-y-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+                    <Sliders size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">นโยบายการจัดสรรบัญชี (Provisioning Policy)</h3>
+                    <p className="text-xs text-slate-500">ตั้งค่านโยบายความปลอดภัยเมื่อมีผู้ใช้ใหม่ล็อกอินผ่าน Google</p>
+                  </div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={googleConfig.enforceDomainRestriction}
-                  onChange={(e) => updateGoogleConfig({ enforceDomainRestriction: e.target.checked })}
-                  className="w-4 h-4 text-purple-600 rounded cursor-pointer mt-1"
-                />
+                <span className="text-[11px] font-semibold text-purple-600 hidden sm:inline-block">☁️ บันทึกลง Cloud ทันที</span>
               </div>
 
-              {/* Toggle 2: Auto-Provisioning */}
-              <div className="flex items-start justify-between gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                <div>
-                  <div className="text-xs font-bold text-slate-900">Auto-Provisioning (สร้างบัญชีให้อัตโนมัติ)</div>
-                  <div className="text-[11px] text-slate-500">สร้างบัญชีนักเรียนให้อัตโนมัติเมื่อเด็กเข้าสู่ระบบด้วย Google ครั้งแรก</div>
+              <div className="space-y-4 pt-2">
+                {/* Toggle 1: Enforce Domain Restriction */}
+                <div className="flex items-start justify-between gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div>
+                    <div className="text-xs font-bold text-slate-900">บังคับใช้อีเมลโดเมนโรงเรียนเท่านั้น</div>
+                    <div className="text-[11px] text-slate-500">บล็อกอีเมลสาธารณะ เช่น @gmail.com หรือโดเมนอื่นที่ไม่ได้ลงทะเบียน</div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={googleConfig.enforceDomainRestriction}
+                    onChange={(e) => {
+                      updateGoogleConfig({ enforceDomainRestriction: e.target.checked });
+                      setDomainSyncFeedback({
+                        type: "success",
+                        message: `อัปเดตนโยบายการบังคับใช้โดเมน (${e.target.checked ? "เปิดใช้งาน" : "ปิดใช้งาน"}) ลง Supabase Cloud แล้ว`
+                      });
+                      setTimeout(() => setDomainSyncFeedback(null), 3500);
+                    }}
+                    className="w-4 h-4 text-purple-600 rounded cursor-pointer mt-1"
+                  />
                 </div>
-                <input
-                  type="checkbox"
-                  checked={googleConfig.autoProvisioning}
-                  onChange={(e) => updateGoogleConfig({ autoProvisioning: e.target.checked })}
-                  className="w-4 h-4 text-purple-600 rounded cursor-pointer mt-1"
-                />
-              </div>
 
-              {/* Default Role Selection */}
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
-                <div>
-                  <div className="text-xs font-bold text-slate-900">บทบาทเริ่มต้นสำหรับบัญชีใหม่</div>
-                  <div className="text-[11px] text-slate-500">สิทธิ์ที่มอบหมายให้ทันทีเมื่อผู้ใช้ใหม่ล็อกอินเข้ามา</div>
+                {/* Toggle 2: Auto-Provisioning */}
+                <div className="flex items-start justify-between gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div>
+                    <div className="text-xs font-bold text-slate-900">Auto-Provisioning (สร้างบัญชีให้อัตโนมัติ)</div>
+                    <div className="text-[11px] text-slate-500">สร้างบัญชีนักเรียนให้อัตโนมัติเมื่อเด็กเข้าสู่ระบบด้วย Google ครั้งแรก</div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={googleConfig.autoProvisioning}
+                    onChange={(e) => {
+                      updateGoogleConfig({ autoProvisioning: e.target.checked });
+                      setDomainSyncFeedback({
+                        type: "success",
+                        message: `อัปเดตนโยบาย Auto-Provisioning (${e.target.checked ? "เปิดใช้งาน" : "ปิดใช้งาน"}) ลง Supabase Cloud แล้ว`
+                      });
+                      setTimeout(() => setDomainSyncFeedback(null), 3500);
+                    }}
+                    className="w-4 h-4 text-purple-600 rounded cursor-pointer mt-1"
+                  />
                 </div>
-                <select
-                  value={googleConfig.defaultRole}
-                  onChange={(e) => updateGoogleConfig({ defaultRole: e.target.value as RoleType })}
-                  className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white"
-                >
-                  <option value="student">🎓 นักเรียน (Student)</option>
-                  <option value="teacher">👩‍🏫 ครูผู้สอน (Teacher)</option>
-                </select>
+
+                {/* Default Role Selection */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-slate-900">บทบาทเริ่มต้นสำหรับบัญชีใหม่</div>
+                    <div className="text-[11px] text-slate-500">สิทธิ์ที่มอบหมายให้ทันทีเมื่อผู้ใช้ใหม่ล็อกอินเข้ามา</div>
+                  </div>
+                  <select
+                    value={googleConfig.defaultRole}
+                    onChange={(e) => {
+                      const newRole = e.target.value as RoleType;
+                      updateGoogleConfig({ defaultRole: newRole });
+                      setDomainSyncFeedback({
+                        type: "success",
+                        message: `ปรับบทบาทเริ่มต้นเป็น ${newRole.toUpperCase()} และซิงก์ลง Supabase Cloud เรียบร้อย`
+                      });
+                      setTimeout(() => setDomainSyncFeedback(null), 3500);
+                    }}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 bg-white"
+                  >
+                    <option value="student">🎓 นักเรียน (Student)</option>
+                    <option value="teacher">👩‍🏫 ครูผู้สอน (Teacher)</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

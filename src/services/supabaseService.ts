@@ -562,4 +562,29 @@ export async function pushAiTutorConfigToCloud(config: AiTutorConfig): Promise<b
   }
 }
 
+/**
+ * บันทึกการตั้งค่า Google Workspace Config (Domain Whitelist, Provisioning Policies) ขึ้น Supabase Cloud (ตาราง system_settings)
+ */
+export async function pushGoogleConfigToCloud(config: GoogleWorkspaceConfig): Promise<boolean> {
+  const client = getSupabaseClient();
+  if (!client) return false;
+
+  try {
+    const { error } = await client.from("system_settings").upsert({
+      key: "google_workspace_config",
+      value: config,
+    }, { onConflict: "key" });
+
+    if (error) {
+      console.warn("Cloud push Google Workspace config error:", error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn("Error in pushGoogleConfigToCloud:", err);
+    return false;
+  }
+}
+
+
 

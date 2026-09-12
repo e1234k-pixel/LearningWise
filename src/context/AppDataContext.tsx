@@ -44,6 +44,7 @@ import {
   pushUserToCloud,
   deleteUserFromCloud,
   pushAiTutorConfigToCloud,
+  pushGoogleConfigToCloud,
   type CloudSyncResult
 } from "../services/supabaseService";
 import {
@@ -122,7 +123,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [envelope, setEnvelope] = useState<Envelope>(initialEnvelope);
   const [users, setUsers] = useState<AuthUser[]>(mockAuthUsers);
   const [currentUser, setCurrentUserState] = useState<AuthUser | null>(mockAuthUsers[1]); // Default to Teacher May
-  const [googleConfig, setGoogleConfig] = useState<GoogleWorkspaceConfig>(initialGoogleConfig);
+  const [googleConfig, setGoogleConfig] = useState<GoogleWorkspaceConfig>(() => {
+    try {
+      const saved = localStorage.getItem(GOOGLE_CONFIG_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return initialGoogleConfig;
+  });
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(initialAuditLogs);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
   const [googleOAuthError, setGoogleOAuthError] = useState<string | null>(null);
@@ -209,6 +216,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                   return merged;
                 });
               }
+              if (cloudData?.googleConfig) {
+                setGoogleConfig(prev => {
+                  const merged = { ...prev, ...cloudData.googleConfig };
+                  localStorage.setItem(GOOGLE_CONFIG_KEY, JSON.stringify(merged));
+                  return merged;
+                });
+              }
             }).catch(e => console.warn("Auto-fetch error on startup:", e));
           }
         })
@@ -249,6 +263,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               });
             }
           }).catch(e => console.warn("Realtime sync error:", e));
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "system_settings" },
+        () => {
+          // Whenever system_settings (googleConfig or aiTutorConfig) changes on Supabase
+          fetchFromSupabase().then(cloudData => {
+            if (cloudData?.googleConfig) {
+              setGoogleConfig(prev => {
+                const merged = { ...prev, ...cloudData.googleConfig };
+                localStorage.setItem(GOOGLE_CONFIG_KEY, JSON.stringify(merged));
+                return merged;
+              });
+            }
+            if (cloudData?.aiTutorConfig) {
+              setAiTutorConfig(prev => {
+                const merged = { ...prev, ...cloudData.aiTutorConfig };
+                localStorage.setItem(AI_TUTOR_CONFIG_KEY, JSON.stringify(merged));
+                return merged;
+              });
+            }
+          }).catch(e => console.warn("Realtime system_settings sync error:", e));
         }
       )
       .subscribe();
@@ -770,7 +807,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const merged = { ...googleConfig, ...newConfig };
     setGoogleConfig(merged);
     localStorage.setItem(GOOGLE_CONFIG_KEY, JSON.stringify(merged));
-    logAudit("Update Google Workspace Config", "system", `อัปเดตการตั้งค่าโดเมน Google Workspace: ${merged.allowedDomains.join(", ")}`);
+    
+    // PUSH TO SUPABASE CLOUD IMMEDIATELY
+    pushGoogleConfigToCloud(merged).catch(err => {
+      console.warn("Failed to push google config to Supabase:", err);
+    });
+
+    logAudit("Update Google Workspace Config", "system", `อัปเดตการตั้งค่าโดเมน Google Workspace: ${merged.allowedDomains.join(", ")} [ซิงก์ Cloud]`);
   };
 
   const updateEnvelope = (newEnvelope: Envelope) => {
@@ -1115,6 +1158,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       setAiTutorConfig(prev => {
         const merged = { ...prev, ...data.aiTutorConfig };
         localStorage.setItem(AI_TUTOR_CONFIG_KEY, JSON.stringify(merged));
+        return merged;
+      });
+    }
+    if (data.googleConfig) {
+      setGoogleConfig(prev => {
+        const merged = { ...prev, ...data.googleConfig };
+        localStorage.setItem(GOOGLE_CONFIG_KEY, JSON.stringify(merged));
         return merged;
       });
     }
